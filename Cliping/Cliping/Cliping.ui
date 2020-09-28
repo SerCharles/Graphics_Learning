@@ -1,28 +1,82 @@
-<UI version="4.0" >
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
  <class>ClipingClass</class>
- <widget class="QMainWindow" name="ClipingClass" >
-  <property name="objectName" >
-   <string notr="true">ClipingClass</string>
-  </property>
-  <property name="geometry" >
+ <widget class="QMainWindow" name="ClipingClass">
+  <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>600</width>
-    <height>400</height>
+    <width>843</width>
+    <height>593</height>
    </rect>
   </property>
-  <property name="windowTitle" >
+  <property name="windowTitle">
    <string>Cliping</string>
-  </property>  <widget class="QMenuBar" name="menuBar" />
-  <widget class="QToolBar" name="mainToolBar" />
-  <widget class="QWidget" name="centralWidget" />
-  <widget class="QStatusBar" name="statusBar" />
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="SourceButton">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>60</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>目标多边形</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="WindowButton">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>100</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>多边形窗口</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="SaveButton">
+    <property name="geometry">
+     <rect>
+      <x>740</x>
+      <y>140</y>
+      <width>93</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>确定</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>843</width>
+     <height>26</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
  </widget>
- <layoutDefault spacing="6" margin="11" />
- <pixmapfunction></pixmapfunction>
+ <layoutdefault spacing="6" margin="11"/>
  <resources>
-   <include location="Cliping.qrc"/>
+  <include location="Cliping.qrc"/>
  </resources>
  <connections/>
-</UI>
+</ui>
