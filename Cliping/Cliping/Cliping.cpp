@@ -55,16 +55,18 @@ bool Cliping::IsClockWise(list<Point> PointLink)
 		current++;
 		previous++;
 	}
-	return sum > 0;
+	current = PointLink.begin();
+	sum += (current->x - previous->x) * (current->y + previous->y);
+	return sum < 0;
 }
 
 bool Cliping::JudgeInside(Point p, list<Point> Polygon)
 {
-	int sum = 0;
-	auto current = BufferPoints.begin();
+	double sum = 0;
+	auto current = Polygon.begin();
 	auto previous = current;
 	current++;
-	while (current != BufferPoints.end())
+	while (current != Polygon.end())
 	{
 		Point q(current->x, current->y);
 		Point r(previous->x, previous->y);
@@ -79,7 +81,7 @@ bool Cliping::JudgeInside(Point p, list<Point> Polygon)
 
 	//最后一个角
 	double last_angle = 0;
-	current = BufferPoints.begin();
+	current = Polygon.begin();
 	{
 		Point q(current->x, current->y);
 		Point r(previous->x, previous->y);
@@ -87,9 +89,9 @@ bool Cliping::JudgeInside(Point p, list<Point> Polygon)
 		double b = p.GetDist(r);
 		double c = q.GetDist(r);
 		double angle = acos((a * a + b * b - c * c) / (2 * a * b));
-		last_angle = angle;
+		sum += angle;
 	}
-	if (abs(last_angle - sum) < 0.001) return 0;
+	if (sum - 2 * 3.1415926535 < - 0.1) return 0;
 	return 1;
 }
 
@@ -132,7 +134,7 @@ void Cliping::CloseLink()
 				}
 			}
 		}
-		BufferPoints.clear();
+
 	}
 
 	else
@@ -173,7 +175,7 @@ void Cliping::CloseLink()
 		}
 
 	}
-
+	BufferPoints.clear();
 }
 
 //画线
