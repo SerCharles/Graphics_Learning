@@ -725,6 +725,7 @@ bool Cliping::JudgeAdd(bool mode, int num)
 			}
 		}
 	}
+	return 1;
 }
 
 void Cliping::JudgeSpecial()
