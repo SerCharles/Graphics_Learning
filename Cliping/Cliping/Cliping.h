@@ -68,18 +68,24 @@ protected:	//mouse
 	list<Point> BufferPoints;
 	//1:默认待裁剪多边形，0：窗口多边形
 	bool mode = 1;
-
-
+	vector<vector<vector<Intersection>>> list_source;
+	vector<vector<vector<bool>>> visit;
+	vector<vector<vector<Intersection>>> list_window;
+	vector<vector<Point>> Result;
 	//求交
 	Point GetIntersect(Point p_start, Point p_end, Point q_start, Point q_end);
 	//求交点k
 	double GetK(Point start, Point end, Point middle);
 	//求所有交点
-	void Cliping::GetIntersections(Point start_a, Point end_a, int npolygon, int nline, vector<list<Point>>& Window,
+	void GetIntersections(Point start_a, Point end_a, int npolygon, int nline, vector<list<Point>>& Window,
 		vector<vector<vector<Intersection>>>& list_a, vector<vector<vector<Intersection>>>& list_b);	//闭合图形
 	//排序交点
-	void Cliping::SortIntersections(vector<Intersection>& t_list);
-
+	void SortIntersections(vector<Intersection>& t_list);
+	//找对应点位置
+	void FindRelatedPlace(bool type, Intersection p, int& npolygon, int& nline, int& npoint);
+	//找开始位置
+	void FindNextPlace(int& npolygon, int& nline, int& npoint, bool& pmode,
+		int cpolygon, int cline, int cpoint, bool cmode, int current);
 	void CloseLink();
 	//判断顺时针
 	bool IsClockWise(list<Point> PointLink);
@@ -87,6 +93,12 @@ protected:	//mouse
 	bool JudgeInside(Point p, list<Point> Polygon);
 	//画线
 	void paintEvent(QPaintEvent *event);
+	//特判没有交点的图像
+	void JudgeSpecial();
+	//判断有没有交点
+	bool Cliping::HasNoIntersection(bool mode, int num);
+	//判断是否符合特判条件
+	bool Cliping::JudgeAdd(bool mode, int num);
 	//切换模式
 private slots:
 	void Cliping::SwitchToSource();
