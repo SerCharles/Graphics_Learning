@@ -123,15 +123,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp" />
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.hpp" />
-    <ClInclude Include="movingball.hpp" />
-    <ClInclude Include="object.hpp" />
+    <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="MovingBall.hpp" />
+    <ClInclude Include="Object.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

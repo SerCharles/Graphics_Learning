@@ -5,7 +5,7 @@ using namespace std;
 
 class Camera
 {
-private:
+public:
 	Point CurrentPlace; //当前相机所在位置
 	float R_Horizontal; //XOZ平面的半径
 	float Arc_Horizontal; //XOZ平面的弧度（0-2pi）
@@ -15,6 +15,9 @@ private:
 	const float K_Horizontal = 0.002;
 	const float K_Vertical = 0.03;
 public:
+	Camera()
+	{
+	}
 	Camera(float R, float start_height)
 	{
 		R_Horizontal = R;
@@ -24,10 +27,18 @@ public:
 		MouseX = -1;
 		MouseY = -1;
 	}
-	Point GetCurrentPlace()
+
+	void Init(float R, float start_height)
 	{
-		return CurrentPlace;
+		R_Horizontal = R;
+		Arc_Horizontal = 0;
+		H_Vertical = start_height;
+		ResetCurrentPlace();
+		MouseX = -1;
+		MouseY = -1;
 	}
+
+
 
 	void ResetCurrentPlace()
 	{

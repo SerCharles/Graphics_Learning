@@ -15,22 +15,22 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="camera.hpp">
+    <ClInclude Include="Camera.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="object.hpp">
+    <ClInclude Include="Object.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="movingball.hpp">
+    <ClInclude Include="MovingBall.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
