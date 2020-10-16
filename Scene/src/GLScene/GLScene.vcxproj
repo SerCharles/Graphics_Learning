@@ -126,6 +126,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Board.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="MovingBall.hpp" />
     <ClInclude Include="Object.hpp" />

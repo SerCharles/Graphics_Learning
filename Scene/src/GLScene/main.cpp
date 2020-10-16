@@ -5,16 +5,17 @@
 #include "Object.hpp"
 #include "MovingBall.hpp"
 #include "Camera.hpp"
+#include "Board.hpp"
 using namespace std;
 
 
 float Stepk = 0.02;
 
-float GroundX = 10;	//平板（桌面）在X和Z方向上的尺寸
-float GroundZ = 10;
-MovingBall A;
-MovingBall B;
-Camera c;
+float XRange = 10, ZRange = 10, Height = 20;
+MovingBall BallA;
+MovingBall BallB;
+Camera TheCamera;
+Board Boards[5];
 
 //初始化光照
 void InitLight()
@@ -45,26 +46,50 @@ void InitLight()
 //初始化相机
 void InitCamera()
 {
-	c.Init(10.0f, 10.0f);
+	TheCamera.Init(10.0f, 10.0f);
 }
 
 //初始化物体
 void InitObjects()
 {
-	A.Init(10, -6, 1, 0, 0);
-	B.Init(7, 10, 1, 0, 0);
+	BallA.Init(7, -5, 1, 10, -6);
+	BallB.Init(-5, 4, 1, 7, 10);
+}
+
+void InitBoards()
+{
+	Point DownA(-XRange, 0, -ZRange);
+	Point DownB(-XRange, 0, ZRange);
+	Point DownC(XRange, 0, -ZRange);
+	Point DownD(XRange, 0, ZRange);
+	Point UpA(-XRange, Height, -ZRange);
+	Point UpB(-XRange, Height, ZRange);
+	Point UpC(XRange, Height, -ZRange);
+	Point UpD(XRange, Height, ZRange);
+	Boards[0].Init(DownA, DownB, DownD, DownC);
+	Boards[1].Init(DownA, DownB, UpB, UpA);
+	Boards[2].Init(DownC, DownD, UpD, UpC);
+	Boards[3].Init(DownA, DownC, UpC, UpA);
+	Boards[4].Init(DownB, DownD, UpD, UpB);
 }
 
 void BoardDisplay(void)
 {
-	glColor3f(0.5, 0.0, 0.0);
-	glBegin(GL_POLYGON);
-	glVertex3f(-GroundX, 0, GroundZ);
-	glVertex3f(-GroundX, 0, -GroundZ);
-	glVertex3f(GroundX, 0, -GroundZ);
-	glVertex3f(GroundX, 0, GroundZ);
-	glEnd();
-	glFlush();
+
+
+	for (int i = 0; i < 5; i++)
+	{
+		
+		glBegin(GL_POLYGON);
+		glColor3f(1.0, 1.0, 1.0);
+		glVertex3f(Boards[i].PointList[0].x, Boards[i].PointList[0].y, Boards[i].PointList[0].z);
+		glVertex3f(Boards[i].PointList[1].x, Boards[i].PointList[1].y, Boards[i].PointList[1].z);
+		glVertex3f(Boards[i].PointList[2].x, Boards[i].PointList[2].y, Boards[i].PointList[2].z);
+		glVertex3f(Boards[i].PointList[3].x, Boards[i].PointList[3].y, Boards[i].PointList[3].z);
+		glEnd();
+		glFlush();
+	}
+	
 }
 
 //显示的函数
@@ -76,7 +101,7 @@ void myDisplay()
 	///////////////////
 
 	glLoadIdentity();
-	Point camera_place = c.CurrentPlace;//这就是视点的坐标  
+	Point camera_place = TheCamera.CurrentPlace;//这就是视点的坐标  
 	gluLookAt(camera_place.x, camera_place.y, camera_place.z, 0, 0, 0, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
 
 	glColor3f(1.0f, 0.0f, 0.0f);
@@ -87,16 +112,22 @@ void myDisplay()
 	GLfloat mat_specular[] = { 0.633000, 0.727811, 0.633000, 0.550000 };
 	GLfloat mat_shininess[] = { 76.800003 }; //材质RGBA镜面指数，数值在0～128范围内
 
-
+	
 	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
 	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-
+	
 	BoardDisplay();					//绘制地板
 
-	A.Move(Stepk);
-	B.Move(Stepk);
+	BallA.Move(Stepk);
+
+	BallA.HandleCollisionBoard(XRange, ZRange);
+	
+	BallB.Move(Stepk);
+	BallB.HandleCollisionBoard(XRange, ZRange);
+	BallA.HandleCollisionBall(BallB);
+
 	//移动到当前小球的位置，画出小球
 	//设置小球材质
 	GLfloat mat_ambient2[] = { 0.250000, 0.207250, 0.207250, 0.922000 };
@@ -109,8 +140,8 @@ void myDisplay()
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular2);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess2);
 
-	Point place_a = A.CurrentPlace;
-	float radius_a = A.Radius;
+	Point place_a = BallA.CurrentPlace;
+	float radius_a = BallA.Radius;
 	glPushMatrix();
 	glTranslatef(place_a.x, place_a.y, place_a.z);
 	glutSolidSphere(radius_a, 40, 40);
@@ -127,8 +158,8 @@ void myDisplay()
 	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular3);
 	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess3);
 
-	Point place_b = B.CurrentPlace;
-	float radius_b = B.Radius;
+	Point place_b = BallB.CurrentPlace;
+	float radius_b = BallB.Radius;
 	glPushMatrix();
 	glTranslatef(place_b.x, place_b.y, place_b.z);
 	glutSolidSphere(radius_b, 40, 40);
@@ -150,7 +181,7 @@ void OnMouseClick(int button, int state, int x, int y)
 {
 	if (state == GLUT_DOWN)
 	{
-		c.MouseDown(x, y);
+		TheCamera.MouseDown(x, y);
 	}
 }
 
@@ -158,7 +189,7 @@ void OnMouseClick(int button, int state, int x, int y)
 //处理鼠标拖动  
 void OnMouseMove(int x, int y) 
 {
-	c.MouseMove(x, y);
+	TheCamera.MouseMove(x, y);
 }
 
 //reshape函数
@@ -184,6 +215,7 @@ int main(int argc, char**argv)
 	
 	InitLight();
 	InitCamera();
+	InitBoards();
 	InitObjects();
 	glutReshapeFunc(reshape); //绑定reshape函数
 	glutDisplayFunc(myDisplay); //绑定显示函数

@@ -1,5 +1,7 @@
+#pragma once
 #include<math.h>
 #include"Object.hpp"
+#include"Board.hpp"
 using namespace std;
 
 #pragma once
@@ -44,7 +46,47 @@ public:
 		CurrentPlace.SetPlace(new_x, new_y, new_z);
 	}
 
+	void HandleCollisionBoard(float XRange, float ZRange)
+	{
+		if (CurrentPlace.x - Radius < -XRange)
+		{
+			CurrentPlace.x = -XRange + Radius;
+			CurrentSpeed.x = -CurrentSpeed.x;
+		}
+		else if (CurrentPlace.x + Radius > XRange)
+		{
+			CurrentPlace.x = XRange - Radius;
+			CurrentSpeed.x = -CurrentSpeed.x;
+		}
+		if (CurrentPlace.z - Radius < -ZRange)
+		{
+			CurrentPlace.z = -ZRange + Radius;
+			CurrentSpeed.z = -CurrentSpeed.z;
+		}
+		else if (CurrentPlace.z + Radius > ZRange)
+		{
+			CurrentPlace.z = ZRange - Radius;
+			CurrentSpeed.z = -CurrentSpeed.z;
+		}
+	}
 
+	void HandleCollisionBall(MovingBall& b)
+	{
+		Point diff = b.CurrentPlace - CurrentPlace;
+		float dist = sqrt(diff * diff);
+		if (dist < Radius + b.Radius)
+		{
+			//径向交换速度，法向速度不变
+			Point speed_collide_self = diff * (CurrentSpeed * diff / dist / dist);
+			Point speed_collide_b = diff * (b.CurrentSpeed * diff / dist / dist);
+			Point unchanged_self = CurrentSpeed - speed_collide_self;
+			Point unchanged_b = b.CurrentSpeed - speed_collide_b;
+			Point new_self = unchanged_self + speed_collide_b;
+			Point new_b = unchanged_b + speed_collide_self;
+			CurrentSpeed = new_self;
+			b.CurrentSpeed = new_b;
 
-
+			
+		}
+	}
 };
