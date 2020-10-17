@@ -4,41 +4,55 @@
 #include<windows.h>
 #include "Object.hpp"
 #include "MovingBall.hpp"
+#include "Light.hpp"
 #include "Camera.hpp"
 #include "Board.hpp"
 using namespace std;
 
 
-float Stepk = 0.02;
+//全局常量
+const float TimeOnce = 0.02; //刷新时间
+const float XRange = 10, ZRange = 10, Height = 8; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
+const int BallComplexity = 40; //小球绘制精细程度
 
-float XRange = 10, ZRange = 10, Height = 20;
-MovingBall BallA;
-MovingBall BallB;
+//光照，相机
 Camera TheCamera;
-Board Boards[5];
+Light TheLight;
 
+//物体
+Board Boards[5]; //边界
+//小球
+MovingBall BallA; 
+MovingBall BallB;
+//TODO:静态的mesh物体
+
+
+
+//初始化函数集合
 //初始化光照
 void InitLight()
 {
+	GLfloat background_color[3] = { 0.0, 0.0, 0.0 };
+	GLfloat ambient[3] = { 0.7f, 0.7f, 0.7f};
+	GLfloat diffuse[3] = { 0.6f, 0.6f, 0.6f};
+	GLfloat specular[3] = { 0.6f, 0.6f, 0.6f};
+	GLfloat position[3] = { 0.0f, 5.0f, 0.0f};
+	TheLight.Init(background_color, ambient, diffuse, specular, position);
 
 	//设置着色模式
 	glShadeModel(GL_SMOOTH);
 	//设置初始背景色，清除颜色缓存和深度缓存
-	glClearColor(0.0, 0.0, 0.0, 1.0);
+	glClearColor(TheLight.Color[0], TheLight.Color[1], TheLight.Color[2], TheLight.Color[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// light source attributes
-	GLfloat LightAmbient[] = { 0.4f, 0.4f, 0.4f, 1.0f };
-	GLfloat LightDiffuse[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-	GLfloat LightSpecular[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-	GLfloat LightPosition[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	glLightfv(GL_LIGHT0, GL_AMBIENT, LightAmbient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, LightDiffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, LightSpecular);
-	glLightfv(GL_LIGHT0, GL_POSITION, LightPosition);
+	//设置光源信息
+	glLightfv(GL_LIGHT0, GL_AMBIENT, TheLight.Ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, TheLight.Diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, TheLight.Specular);
+	glLightfv(GL_LIGHT0, GL_POSITION, TheLight.Position);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
-
+	
 	//设置深度检测，即只绘制最前面的一层
 	glEnable(GL_DEPTH_TEST);
 }
@@ -46,18 +60,14 @@ void InitLight()
 //初始化相机
 void InitCamera()
 {
+	//设置初始相机位置
 	TheCamera.Init(10.0f, 10.0f);
 }
 
-//初始化物体
-void InitObjects()
-{
-	BallA.Init(7, -5, 1, 10, -6);
-	BallB.Init(-5, 4, 1, 7, 10);
-}
-
+//初始化边界和地板
 void InitBoards()
 {
+	//8个点
 	Point DownA(-XRange, 0, -ZRange);
 	Point DownB(-XRange, 0, ZRange);
 	Point DownC(XRange, 0, -ZRange);
@@ -66,20 +76,107 @@ void InitBoards()
 	Point UpB(-XRange, Height, ZRange);
 	Point UpC(XRange, Height, -ZRange);
 	Point UpD(XRange, Height, ZRange);
-	Boards[0].Init(DownA, DownB, DownD, DownC);
-	Boards[1].Init(DownA, DownB, UpB, UpA);
-	Boards[2].Init(DownC, DownD, UpD, UpC);
-	Boards[3].Init(DownA, DownC, UpC, UpA);
-	Boards[4].Init(DownB, DownD, UpD, UpB);
+
+	//设置地板和挡板位置
+	Boards[0].InitPlace(DownA, DownB, DownD, DownC);
+	Boards[1].InitPlace(DownA, DownB, UpB, UpA);
+	Boards[2].InitPlace(DownC, DownD, UpD, UpC);
+	Boards[3].InitPlace(DownA, DownC, UpC, UpA);
+	Boards[4].InitPlace(DownB, DownD, UpD, UpB);
+
+	//地板材质
+	GLfloat color_floor[3] = { 1.0, 1.0, 1.0 };
+	GLfloat ambient_floor[3] = { 0.4, 0.4, 0.4};
+	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2};
+	GLfloat specular_floor[3] = { 0.4, 0.4, 0.4};
+	GLfloat shininess_floor = 90;
+	Boards[0].InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
+
+	//设置四周挡板材质
+	GLfloat color_border[3] = { 1.0, 1.0, 1.0 };
+	GLfloat ambient_border[3] = { 0.2, 0.2, 0.2};
+	GLfloat diffuse_border[3] = { 0.2, 0.2, 0.2};
+	GLfloat specular_border[3] = { 0.2, 0.2, 0.2};
+	GLfloat shininess_border = 40;
+	for (int i = 1; i < 5; i++)
+	{
+		Boards[i].InitColor(color_border, ambient_border, diffuse_border, specular_border, shininess_border);
+	}
 }
 
-void BoardDisplay(void)
+//初始化静态物体
+void InitStatics()
 {
 
+}
 
+//初始化小球
+void InitMovingBalls()
+{
+	//小球A的位置，速度
+	float radius_a = 1;
+	Point place_a = Point(7, 0, -5);
+	Point speed_a = Point(10, 0, -6);
+
+	//小球A的纹理，材质，颜色
+	GLfloat color_a[3] = { 1.0, 0.0, 0.0 };
+	GLfloat ambient_a[3] = { 0.4, 0.2, 0.2 };
+	GLfloat diffuse_a[3] = { 1, 0.8, 0.8 };
+	GLfloat specular_a[3] = { 0.5, 0.3, 0.3 };
+	GLfloat shininess_a = 10;
+
+	//初始化小球A
+	BallA.InitPlace(place_a.x, place_a.z, radius_a, speed_a.x, speed_a.z);
+	BallA.InitColor(color_a, ambient_a, diffuse_a, specular_a, shininess_a);
+
+	//小球B的位置，速度
+	float radius_b = 1;
+	Point place_b = Point(-5, 0, -4);
+	Point speed_b = Point(7, 0, 10);
+
+	//小球B的纹理，材质，颜色
+	GLfloat color_b[3] = { 0.0, 0.0, 1.0 };
+	GLfloat ambient_b[3] = { 0.2, 0.2, 0.4 };
+	GLfloat diffuse_b[3] = { 0.3, 0.3, 0.6 };
+	GLfloat specular_b[3] = { 0.8, 0.8, 1.0 };
+	GLfloat shininess_b = 80;
+
+	//初始化小球B
+	BallB.InitPlace(place_b.x, place_b.z, radius_b, speed_b.x, speed_b.z);
+	BallB.InitColor(color_b, ambient_b, diffuse_b, specular_b, shininess_b);
+}
+
+//初始化的主函数
+void InitScene()
+{
+	InitLight();
+	InitCamera();
+	InitBoards();
+	InitStatics();
+	InitMovingBalls();
+}
+
+//绘制函数集合
+//设置相机位置
+void SetCamera()
+{
+	glLoadIdentity();
+	Point camera_place = TheCamera.CurrentPlace;//这就是视点的坐标  
+	gluLookAt(camera_place.x, camera_place.y, camera_place.z, 0, 0, 0, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
+}
+
+//绘制边界和地板
+void DrawBoards()
+{
 	for (int i = 0; i < 5; i++)
 	{
-		
+		glColor3f(Boards[i].Color[0], Boards[i].Color[1], Boards[i].Color[2]);
+		glMaterialfv(GL_FRONT, GL_AMBIENT, Boards[i].Ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, Boards[i].Diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, Boards[i].Specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, Boards[i].Shininess);
+
+
 		glBegin(GL_POLYGON);
 		glColor3f(1.0, 1.0, 1.0);
 		glVertex3f(Boards[i].PointList[0].x, Boards[i].PointList[0].y, Boards[i].PointList[0].z);
@@ -92,83 +189,64 @@ void BoardDisplay(void)
 	
 }
 
-//显示的函数
-void myDisplay()
+//绘制静态物体
+//初始化静态物体
+void DrawStatics()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//计算小球当前的位置
 
-	///////////////////
-
-	glLoadIdentity();
-	Point camera_place = TheCamera.CurrentPlace;//这就是视点的坐标  
-	gluLookAt(camera_place.x, camera_place.y, camera_place.z, 0, 0, 0, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
-
-	glColor3f(1.0f, 0.0f, 0.0f);
-
-	//设置地板材质
-	GLfloat mat_ambient[] = { 0.021500, 0.174500, 0.021500, 0.550000 };
-	GLfloat mat_diffuse[] = { 0.075680, 0.614240, 0.075680, 0.550000 };
-	GLfloat mat_specular[] = { 0.633000, 0.727811, 0.633000, 0.550000 };
-	GLfloat mat_shininess[] = { 76.800003 }; //材质RGBA镜面指数，数值在0～128范围内
-
-	
-	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
-	
-	BoardDisplay();					//绘制地板
-
-	BallA.Move(Stepk);
-
-	BallA.HandleCollisionBoard(XRange, ZRange);
-	
-	BallB.Move(Stepk);
-	BallB.HandleCollisionBoard(XRange, ZRange);
-	BallA.HandleCollisionBall(BallB);
-
-	//移动到当前小球的位置，画出小球
-	//设置小球材质
-	GLfloat mat_ambient2[] = { 0.250000, 0.207250, 0.207250, 0.922000 };
-	GLfloat mat_diffuse2[] = { 1.000000, 0.829000, 0.829000, 0.922000 };
-	GLfloat mat_specular2[] = { 0.296648, 0.296648, 0.296648, 0.922000 };
-	GLfloat mat_shininess2[] = { 11.264000 }; //材质RGBA镜面指数，数值在0～128范围内
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient2);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse2);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular2);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess2);
-
-	Point place_a = BallA.CurrentPlace;
-	float radius_a = BallA.Radius;
-	glPushMatrix();
-	glTranslatef(place_a.x, place_a.y, place_a.z);
-	glutSolidSphere(radius_a, 40, 40);
-	glPopMatrix();
-
-	//设置小球材质
-	GLfloat mat_ambient3[] = { 0.174500, 0.011750, 0.011750, 0.550000 };
-	GLfloat mat_diffuse3[] = { 0.614240, 0.041360, 0.041360, 0.550000 };
-	GLfloat mat_specular3[] = { 0.727811, 0.626959, 0.626959, 0.550000 };
-	GLfloat mat_shininess3[] = { 76.800003 }; //材质RGBA镜面指数，数值在0～128范围内
-
-	glMaterialfv(GL_FRONT, GL_AMBIENT, mat_ambient3);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, mat_diffuse3);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular3);
-	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess3);
-
-	Point place_b = BallB.CurrentPlace;
-	float radius_b = BallB.Radius;
-	glPushMatrix();
-	glTranslatef(place_b.x, place_b.y, place_b.z);
-	glutSolidSphere(radius_b, 40, 40);
-	glPopMatrix();
-
-	glutSwapBuffers();
-	//////////////////
 }
 
+//进行小球位置更新和碰撞检测，处理
+void UpdateBalls()
+{
+	BallA.Move(TimeOnce);
+	BallA.HandleCollisionBoard(XRange, ZRange);
+	BallB.Move(TimeOnce);
+	BallB.HandleCollisionBoard(XRange, ZRange);
+	BallA.HandleCollisionBall(BallB);
+	//TODO 碰撞提示
+	//TODO 和静态物体包围盒碰撞
+}
+
+//绘制一个小球
+void DrawOneBall(MovingBall& ball)
+{
+	//设置纹理，材质等信息
+	glMaterialfv(GL_FRONT, GL_AMBIENT, ball.Ambient);
+	glMaterialfv(GL_FRONT, GL_DIFFUSE, ball.Diffuse);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, ball.Specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, ball.Shininess);
+
+	//平移到坐标原点，绘制，恢复坐标
+	glPushMatrix();
+	glTranslatef(ball.CurrentPlace.x, ball.CurrentPlace.y, ball.CurrentPlace.z);
+	glutSolidSphere(ball.Radius, BallComplexity, BallComplexity);
+	glPopMatrix();
+}
+
+//绘制小球
+void DrawBalls()
+{
+	//更新小球位置
+	UpdateBalls();
+	
+	//绘制小球
+	DrawOneBall(BallA);
+	DrawOneBall(BallB);
+}
+
+//绘制的主函数
+void DrawScene()
+{
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//清除颜色缓存
+	SetCamera();//设置相机
+	DrawBoards();//绘制地板和边框
+	DrawStatics();//绘制静态物体
+	DrawBalls();//更新和绘制小球
+	glutSwapBuffers();
+}
+
+//全局定时器
 void OnTimer(int value)
 {
 	glutPostRedisplay();//标记当前窗口需要重新绘制，调用myDisplay()
@@ -176,6 +254,7 @@ void OnTimer(int value)
 }
 
 
+//交互函数集合
 //处理鼠标点击 
 void OnMouseClick(int button, int state, int x, int y)  
 {
@@ -184,7 +263,6 @@ void OnMouseClick(int button, int state, int x, int y)
 		TheCamera.MouseDown(x, y);
 	}
 }
-
 
 //处理鼠标拖动  
 void OnMouseMove(int x, int y) 
@@ -213,12 +291,9 @@ int main(int argc, char**argv)
 	glutCreateWindow("MyScene");
 
 	
-	InitLight();
-	InitCamera();
-	InitBoards();
-	InitObjects();
+	InitScene();
 	glutReshapeFunc(reshape); //绑定reshape函数
-	glutDisplayFunc(myDisplay); //绑定显示函数
+	glutDisplayFunc(DrawScene); //绑定显示函数
 	glutTimerFunc(20, OnTimer, 1);  //绑定计时刷新函数
 	glutMouseFunc(OnMouseClick); //绑定鼠标点击函数
 	glutMotionFunc(OnMouseMove); //绑定鼠标移动函数

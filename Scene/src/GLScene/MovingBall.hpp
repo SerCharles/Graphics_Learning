@@ -1,5 +1,6 @@
 #pragma once
 #include<math.h>
+#include<GL/glut.h>
 #include"Object.hpp"
 #include"Board.hpp"
 using namespace std;
@@ -8,31 +9,45 @@ using namespace std;
 class MovingBall
 {
 public:
+	//位置，速度信息
 	Point CurrentPlace;
 	float Radius;
 	Point CurrentSpeed;
+
+	//材质，纹理，颜色信息
+	GLfloat Color[3] = { 0, 0, 0 }; //颜色
+	GLfloat Ambient[4] = { 0, 0, 0, 0 }; //环境光
+	GLfloat Diffuse[4] = { 0, 0, 0, 0 }; //漫反射
+	GLfloat Specular[4] = { 0, 0, 0, 0 }; //镜面反射
+	GLfloat Shininess[4] = { 0 }; //镜面指数
 public:
-	MovingBall()
-	{
+	MovingBall(){}
 
-	}
-	MovingBall(float x, float z, float radius, float speed_x, float speed_z)
-	{
-		CurrentPlace.SetPlace(x, radius, z);
-		CurrentSpeed.SetPlace(speed_x, 0, speed_z);
-		Radius = radius;
-	}
-	void Init(float x, float z, float radius, float speed_x, float speed_z)
+	//初始化位置，速度信息
+	void InitPlace(float x, float z, float radius, float speed_x, float speed_z)
 	{
 		CurrentPlace.SetPlace(x, radius, z);
 		CurrentSpeed.SetPlace(speed_x, 0, speed_z);
 		Radius = radius;
 	}
 
-	Point SetCurrentSpeed(float speed_x, float speed_z)
+	//初始化颜色，纹理，材质信息
+	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess)
 	{
-		CurrentSpeed.SetPlace(speed_x, 0, speed_z);
+		for (int i = 0; i < 3; i++)
+		{
+			Color[i] = color[i];
+			Ambient[i] = ambient[i];
+			Diffuse[i] = diffuse[i];
+			Specular[i] = specular[i];
+		}
+		//透明度：1
+		Ambient[3] = 1.0;
+		Diffuse[3] = 1.0;
+		Specular[3] = 1.0;
+		Shininess[0] = shininess;
 	}
+
 
 	//处理移动
 	void Move(float time)
@@ -46,6 +61,11 @@ public:
 		CurrentPlace.SetPlace(new_x, new_y, new_z);
 	}
 
+	/*
+		描述：处理与边界相撞
+		参数：X范围（-X,X),Z范围(-Z,Z)
+		返回：无
+	*/
 	void HandleCollisionBoard(float XRange, float ZRange)
 	{
 		if (CurrentPlace.x - Radius < -XRange)
@@ -70,6 +90,11 @@ public:
 		}
 	}
 
+	/*
+	描述：处理与球相撞，弹性碰撞
+	参数：X范围（-X,X),Z范围(-Z,Z)
+	返回：无
+	*/
 	void HandleCollisionBall(MovingBall& b)
 	{
 		Point diff = b.CurrentPlace - CurrentPlace;
@@ -85,8 +110,6 @@ public:
 			Point new_b = unchanged_b + speed_collide_self;
 			CurrentSpeed = new_self;
 			b.CurrentSpeed = new_b;
-
-			
 		}
 	}
 };
