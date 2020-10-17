@@ -11,6 +11,8 @@ using namespace std;
 
 
 //全局常量
+const int WindowSizeX = 800, WindowSizeY = 600, WindowPlaceX = 100, WindowPlaceY = 100;
+const char WindowName[] = "MyScene";
 const float TimeOnce = 0.02; //刷新时间
 const float XRange = 10, ZRange = 10, Height = 8; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
 const int BallComplexity = 40; //小球绘制精细程度
@@ -29,6 +31,15 @@ MovingBall BallB;
 
 
 //初始化函数集合
+//初始化窗口
+void InitWindow()
+{
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+	glutInitWindowSize(WindowSizeX, WindowSizeY);
+	glutInitWindowPosition(WindowPlaceX, WindowPlaceY);
+	glutCreateWindow(WindowName);
+}
+
 //初始化光照
 void InitLight()
 {
@@ -149,6 +160,7 @@ void InitMovingBalls()
 //初始化的主函数
 void InitScene()
 {
+
 	InitLight();
 	InitCamera();
 	InitBoards();
@@ -162,7 +174,8 @@ void SetCamera()
 {
 	glLoadIdentity();
 	Point camera_place = TheCamera.CurrentPlace;//这就是视点的坐标  
-	gluLookAt(camera_place.x, camera_place.y, camera_place.z, 0, 0, 0, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
+	Point camera_center = TheCamera.LookCenter;//这是视点中心坐标
+	gluLookAt(camera_place.x, camera_place.y, camera_place.z, camera_center.x, camera_center.y, camera_center.z, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
 }
 
 //绘制边界和地板
@@ -270,6 +283,53 @@ void OnMouseMove(int x, int y)
 	TheCamera.MouseMove(x, y);
 }
 
+//处理键盘点击（WASD）
+void OnKeyClick(unsigned char key, int x, int y)
+{
+	int type = -1;
+	if (key == 'w')
+	{
+		type = 0;
+	}
+	else if (key == 'a')
+	{
+		type = 1;
+	}
+	else if (key == 's')
+	{
+		type = 2;
+	}
+	else if (key == 'd')
+	{
+		type = 3;
+	}
+	TheCamera.KeyboardMove(type);
+}
+
+//处理键盘点击（前后左右）
+void OnSpecialKeyClick(GLint key, GLint x, GLint y)
+{
+	int type = -1;
+	if (key == GLUT_KEY_UP)
+	{
+		type = 0;
+	}
+	if (key == GLUT_KEY_LEFT)
+	{
+		type = 1;
+	}
+	if (key == GLUT_KEY_DOWN)
+	{
+		type = 2;
+	}
+	if (key == GLUT_KEY_RIGHT)
+	{
+		type = 3;
+	}
+	TheCamera.KeyboardMove(type);
+}
+
+
 //reshape函数
 void reshape(int w, int h)
 {
@@ -283,19 +343,15 @@ void reshape(int w, int h)
 int main(int argc, char**argv)
 {
 
-	glutInit(&argc, argv);
-	//窗口的相关参数设定，并创建显示窗口
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-	glutInitWindowSize(800, 600);
-	glutInitWindowPosition(100, 100);
-	glutCreateWindow("MyScene");
-
-	
-	InitScene();
+	glutInit(&argc, argv); 
+	InitWindow();             //初始化窗口
+	InitScene();              //初始化场景
 	glutReshapeFunc(reshape); //绑定reshape函数
 	glutDisplayFunc(DrawScene); //绑定显示函数
-	glutTimerFunc(20, OnTimer, 1);  //绑定计时刷新函数
+	glutTimerFunc(20, OnTimer, 1);  //启动计时器
 	glutMouseFunc(OnMouseClick); //绑定鼠标点击函数
 	glutMotionFunc(OnMouseMove); //绑定鼠标移动函数
+	glutKeyboardFunc(OnKeyClick);//绑定键盘点击函数
+	glutSpecialFunc(OnSpecialKeyClick);//绑定特殊键盘点击函数
 	glutMainLoop();
 }
