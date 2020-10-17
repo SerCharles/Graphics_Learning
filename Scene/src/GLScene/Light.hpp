@@ -30,6 +30,6 @@ public:
 		Specular[3] = 1.0;
 
 		//无限远处平行光
-		Position[3] = 0.0; 
+		Position[3] = 1.0; 
 	}
 };

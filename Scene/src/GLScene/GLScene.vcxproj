@@ -76,6 +76,7 @@
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
       <ConformanceMode>true</ConformanceMode>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -130,7 +131,8 @@
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="MovingBall.hpp" />
-    <ClInclude Include="Object.hpp" />
+    <ClInclude Include="Point.hpp" />
+    <ClInclude Include="Static.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

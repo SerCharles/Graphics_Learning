@@ -1,8 +1,9 @@
 #pragma once
 #include<math.h>
 #include<GL/glut.h>
-#include"Object.hpp"
+#include"Point.hpp"
 #include"Board.hpp"
+#include"Static.hpp"
 using namespace std;
 
 #pragma once
@@ -48,6 +49,11 @@ public:
 		Shininess[0] = shininess;
 	}
 
+	//求点到球心距离
+	float GetDistance(Point p)
+	{ 
+		return sqrt((p - CurrentPlace) * (p - CurrentPlace));
+	}
 
 	//处理移动
 	void Move(float time)
@@ -91,8 +97,38 @@ public:
 	}
 
 	/*
+	描述：处理与静态物体相撞，弹性碰撞
+	返回：无
+	*/
+	void HandleCollisionStatic(Static& b)
+	{
+		//用clamping求AABB里离球最近的点
+		float near_x = max(b.BoundingBoxDown.x, min(CurrentPlace.x, b.BoundingBoxUp.x));
+		float near_y = max(b.BoundingBoxDown.y, min(CurrentPlace.y, b.BoundingBoxUp.y));
+		float near_z = max(b.BoundingBoxDown.z, min(CurrentPlace.z, b.BoundingBoxUp.z));
+		Point near_p(near_x, near_y, near_z);
+		float distance = GetDistance(near_p);
+
+		//碰撞:更改速度
+		if(distance < Radius)
+		{
+			if (near_x == b.BoundingBoxDown.x || near_x == b.BoundingBoxUp.x)
+			{
+				CurrentSpeed.x = -CurrentSpeed.x;
+			}
+			if (near_y == b.BoundingBoxDown.y || near_x == b.BoundingBoxUp.y)
+			{
+				CurrentSpeed.y = -CurrentSpeed.y;
+			}
+			if (near_z == b.BoundingBoxDown.z || near_z == b.BoundingBoxUp.z)
+			{
+				CurrentSpeed.z = -CurrentSpeed.z;
+			}
+		}
+	}
+
+	/*
 	描述：处理与球相撞，弹性碰撞
-	参数：X范围（-X,X),Z范围(-Z,Z)
 	返回：无
 	*/
 	void HandleCollisionBall(MovingBall& b)

@@ -1,6 +1,6 @@
 #pragma once
 #include<math.h>
-#include"Object.hpp"
+#include"Point.hpp"
 using namespace std;
 
 

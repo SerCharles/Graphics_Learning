@@ -21,9 +21,6 @@
     <ClInclude Include="Camera.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Object.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MovingBall.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -31,6 +28,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Light.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Point.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Static.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

@@ -6,7 +6,17 @@ using namespace std;
 
 #define PI 3.1415926
 
+float max(float a, float b)
+{
+	if (a > b) return a;
+	return b;
+}
 
+float min(float a, float b)
+{
+	if (a < b) return a;
+	return b;
+}
 
 //3D点的基类
 class Point

@@ -2,11 +2,12 @@
 #include<iostream>
 #include<math.h>
 #include<windows.h>
-#include "Object.hpp"
+#include "Point.hpp"
 #include "MovingBall.hpp"
 #include "Light.hpp"
 #include "Camera.hpp"
 #include "Board.hpp"
+#include "Static.hpp"
 using namespace std;
 
 
@@ -26,7 +27,8 @@ Board Boards[5]; //边界
 //小球
 MovingBall BallA; 
 MovingBall BallB;
-//TODO:静态的mesh物体
+//静态的物体
+Static Statics[4];
 
 
 
@@ -44,10 +46,10 @@ void InitWindow()
 void InitLight()
 {
 	GLfloat background_color[3] = { 0.0, 0.0, 0.0 };
-	GLfloat ambient[3] = { 0.7f, 0.7f, 0.7f};
-	GLfloat diffuse[3] = { 0.6f, 0.6f, 0.6f};
-	GLfloat specular[3] = { 0.6f, 0.6f, 0.6f};
-	GLfloat position[3] = { 0.0f, 5.0f, 0.0f};
+	GLfloat ambient[3] = { 1, 1, 1};
+	GLfloat diffuse[3] = { 1, 1, 1};
+	GLfloat specular[3] = { 1, 1, 1};
+	GLfloat position[3] = { 0.0f, 10.0f, 0.0f};
 	TheLight.Init(background_color, ambient, diffuse, specular, position);
 
 	//设置着色模式
@@ -118,7 +120,26 @@ void InitBoards()
 //初始化静态物体
 void InitStatics()
 {
-
+	float LargeRadius = 2;
+	float SmallRadius = 1;
+	float DownHeight = 2;
+	float UpHeight = 4;
+	Statics[0].InitPlace(LargeRadius, SmallRadius, DownHeight, UpHeight, -XRange + LargeRadius, 0, -ZRange + LargeRadius);
+	Statics[1].InitPlace(LargeRadius, SmallRadius, DownHeight, UpHeight, -XRange + LargeRadius, 0, ZRange - LargeRadius);
+	Statics[2].InitPlace(LargeRadius, SmallRadius, DownHeight, UpHeight, XRange - LargeRadius, 0, ZRange - LargeRadius);
+	Statics[3].InitPlace(LargeRadius, SmallRadius, DownHeight, UpHeight, XRange - LargeRadius, 0, -ZRange + LargeRadius);
+	
+	
+	//小球A的纹理，材质，颜色
+	GLfloat color[3] = { 1.0, 1.0, 0.0 };
+	GLfloat ambient[3] = { 0.4, 0.4, 0.2 };
+	GLfloat diffuse[3] = { 1, 0, 0.8 };
+	GLfloat specular[3] = { 0.5, 0.5, 0.3 };
+	GLfloat shininess = 60;
+	for (int i = 0; i < 4; i++)
+	{
+		Statics[i].InitColor(color, ambient, diffuse, specular, shininess);
+	}
 }
 
 //初始化小球
@@ -126,7 +147,7 @@ void InitMovingBalls()
 {
 	//小球A的位置，速度
 	float radius_a = 1;
-	Point place_a = Point(7, 0, -5);
+	Point place_a = Point(3, 0, -3);
 	Point speed_a = Point(10, 0, -6);
 
 	//小球A的纹理，材质，颜色
@@ -142,7 +163,7 @@ void InitMovingBalls()
 
 	//小球B的位置，速度
 	float radius_b = 1;
-	Point place_b = Point(-5, 0, -4);
+	Point place_b = Point(-3, 0, -3);
 	Point speed_b = Point(7, 0, 10);
 
 	//小球B的纹理，材质，颜色
@@ -191,7 +212,6 @@ void DrawBoards()
 
 
 		glBegin(GL_POLYGON);
-		glColor3f(1.0, 1.0, 1.0);
 		glVertex3f(Boards[i].PointList[0].x, Boards[i].PointList[0].y, Boards[i].PointList[0].z);
 		glVertex3f(Boards[i].PointList[1].x, Boards[i].PointList[1].y, Boards[i].PointList[1].z);
 		glVertex3f(Boards[i].PointList[2].x, Boards[i].PointList[2].y, Boards[i].PointList[2].z);
@@ -202,11 +222,51 @@ void DrawBoards()
 	
 }
 
+
+void DrawPolygon(Point a, Point b, Point c, Point d)
+{
+	glBegin(GL_POLYGON);
+	glVertex3f(a.x, a.y, a.z);
+	glVertex3f(b.x, b.y, b.z);
+	glVertex3f(c.x, c.y, c.z);
+	glVertex3f(d.x, d.y, d.z);
+	glEnd();
+}
+
 //绘制静态物体
-//初始化静态物体
 void DrawStatics()
 {
+	
+	for (int i = 0; i < 4; i++)
+	{
+		glColor3f(Statics[i].Color[0], Statics[i].Color[1], Statics[i].Color[2]);
+		glMaterialfv(GL_FRONT, GL_AMBIENT, Statics[i].Ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, Statics[i].Diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, Statics[i].Specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, Statics[i].Shininess);
 
+
+		DrawPolygon(Statics[i].BottomPoints[0], Statics[i].BottomPoints[1], Statics[i].MiddlePoints[1], Statics[i].MiddlePoints[0]);
+		DrawPolygon(Statics[i].BottomPoints[1], Statics[i].BottomPoints[2], Statics[i].MiddlePoints[2], Statics[i].MiddlePoints[1]);
+		DrawPolygon(Statics[i].BottomPoints[2], Statics[i].BottomPoints[3], Statics[i].MiddlePoints[3], Statics[i].MiddlePoints[2]);
+		DrawPolygon(Statics[i].BottomPoints[3], Statics[i].BottomPoints[0], Statics[i].MiddlePoints[0], Statics[i].MiddlePoints[3]);
+
+		DrawPolygon(Statics[i].UpPoints[0], Statics[i].UpPoints[1], Statics[i].MiddlePoints[1], Statics[i].MiddlePoints[0]);
+		DrawPolygon(Statics[i].UpPoints[1], Statics[i].UpPoints[2], Statics[i].MiddlePoints[2], Statics[i].MiddlePoints[1]);
+		DrawPolygon(Statics[i].UpPoints[2], Statics[i].UpPoints[3], Statics[i].MiddlePoints[3], Statics[i].MiddlePoints[2]);
+		DrawPolygon(Statics[i].UpPoints[3], Statics[i].UpPoints[0], Statics[i].MiddlePoints[0], Statics[i].MiddlePoints[3]);
+	
+		DrawPolygon(Statics[i].UpPoints[0], Statics[i].UpPoints[1], Statics[i].UpPoints[2], Statics[i].UpPoints[3]);
+		DrawPolygon(Statics[i].BottomPoints[0], Statics[i].BottomPoints[1], Statics[i].BottomPoints[2], Statics[i].BottomPoints[3]);
+
+		glPushMatrix();
+		glTranslatef(Statics[i].CircleCenter.x, Statics[i].CircleCenter.y, Statics[i].CircleCenter.z);
+		glutSolidSphere(Statics[i].CircleRadius, BallComplexity, BallComplexity);
+		glPopMatrix();
+
+		glFlush();
+	}
+	
 }
 
 //进行小球位置更新和碰撞检测，处理
@@ -216,9 +276,14 @@ void UpdateBalls()
 	BallA.HandleCollisionBoard(XRange, ZRange);
 	BallB.Move(TimeOnce);
 	BallB.HandleCollisionBoard(XRange, ZRange);
+	for (int i = 0; i < 4; i++)
+	{
+		BallA.HandleCollisionStatic(Statics[i]);
+		BallB.HandleCollisionStatic(Statics[i]);
+	}
 	BallA.HandleCollisionBall(BallB);
 	//TODO 碰撞提示
-	//TODO 和静态物体包围盒碰撞
+	
 }
 
 //绘制一个小球
@@ -253,8 +318,8 @@ void DrawScene()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//清除颜色缓存
 	SetCamera();//设置相机
-	DrawBoards();//绘制地板和边框
 	DrawStatics();//绘制静态物体
+	DrawBoards();//绘制地板和边框
 	DrawBalls();//更新和绘制小球
 	glutSwapBuffers();
 }
