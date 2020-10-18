@@ -76,21 +76,25 @@ public:
 	{
 		if (CurrentPlace.x - Radius < -XRange)
 		{
+			cout << "球和边界碰撞" << endl;
 			CurrentPlace.x = -XRange + Radius;
 			CurrentSpeed.x = -CurrentSpeed.x;
 		}
 		else if (CurrentPlace.x + Radius > XRange)
 		{
+			cout << "球和边界碰撞" << endl;
 			CurrentPlace.x = XRange - Radius;
 			CurrentSpeed.x = -CurrentSpeed.x;
 		}
 		if (CurrentPlace.z - Radius < -ZRange)
 		{
+			cout << "球和边界碰撞" << endl;
 			CurrentPlace.z = -ZRange + Radius;
 			CurrentSpeed.z = -CurrentSpeed.z;
 		}
 		else if (CurrentPlace.z + Radius > ZRange)
 		{
+			cout << "球和边界碰撞" << endl;
 			CurrentPlace.z = ZRange - Radius;
 			CurrentSpeed.z = -CurrentSpeed.z;
 		}
@@ -112,6 +116,7 @@ public:
 		//碰撞:更改速度
 		if(distance < Radius)
 		{
+			cout << "球和静态柱子碰撞" << endl;
 			if (near_x == b.BoundingBoxDown.x || near_x == b.BoundingBoxUp.x)
 			{
 				CurrentSpeed.x = -CurrentSpeed.x;
@@ -137,6 +142,8 @@ public:
 		float dist = sqrt(diff * diff);
 		if (dist < Radius + b.Radius)
 		{
+			cout << "球和球碰撞" << endl;
+
 			//径向交换速度，法向速度不变
 			Point speed_collide_self = diff * (CurrentSpeed * diff / dist / dist);
 			Point speed_collide_b = diff * (b.CurrentSpeed * diff / dist / dist);

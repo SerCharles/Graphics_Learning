@@ -40,6 +40,10 @@ void InitWindow()
 	glutInitWindowSize(WindowSizeX, WindowSizeY);
 	glutInitWindowPosition(WindowPlaceX, WindowPlaceY);
 	glutCreateWindow(WindowName);
+	const GLubyte* OpenGLVersion = glGetString(GL_VERSION);
+	const GLubyte* gluVersion = gluGetString(GLU_VERSION);
+	printf("OpenGL实现的版本号：%s\n", OpenGLVersion);
+	printf("OGLU工具库版本：%s\n", gluVersion);
 }
 
 //初始化光照
