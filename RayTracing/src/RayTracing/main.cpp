@@ -8,7 +8,7 @@
 #include "Camera.hpp"
 #include "Board.hpp"
 #include "Static.hpp"
-//#include "TriMesh.hpp"
+#include "TriMesh.hpp"
 using namespace std;
 
 
@@ -34,7 +34,7 @@ Ball BallA;
 //静态的物体
 Static StaticA;
 //面片物体
-//TriMesh MeshA;
+TriMesh MeshA;
 
 
 //初始化函数集合
@@ -155,7 +155,7 @@ void InitBalls()
 	BallA.InitColor(color_a, ambient_a, diffuse_a, specular_a, shininess_a);
 }
 
-/*
+
 //初始化面片
 void InitMeshs()
 {
@@ -173,7 +173,7 @@ void InitMeshs()
 	MeshA.InitPlace("model.ply", 2, center);
 	MeshA.InitColor(color, ambient, diffuse, specular, shininess);
 }
-*/
+
 //初始化的主函数
 
 void InitScene()
@@ -183,7 +183,7 @@ void InitScene()
 	InitBoards();
 	InitStatics();
 	InitBalls();
-	//InitMeshs();
+	InitMeshs();
 }
 
 //绘制函数集合
@@ -217,7 +217,7 @@ void DrawBalls()
 //绘制mesh
 void DrawMeshs()
 {
-	
+	MeshA.Draw();
 }
 
 //绘制的主函数
@@ -227,7 +227,8 @@ void DrawScene()
 	SetCamera();//设置相机
 	DrawStatics();//绘制静态物体
 	DrawBoards();//绘制地板和边框
-	DrawBalls();//更新和绘制小球
+	DrawBalls();//绘制小球
+	DrawMeshs();//绘制面片
 	glutSwapBuffers();
 }
 

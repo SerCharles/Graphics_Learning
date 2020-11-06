@@ -155,13 +155,12 @@
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Ball.hpp" />
-    <ClInclude Include="TriMesh.hpp" />
     <ClInclude Include="Point.hpp" />
     <ClInclude Include="Static.hpp" />
+    <ClInclude Include="TriMesh.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
