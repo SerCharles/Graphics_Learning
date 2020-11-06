@@ -27,12 +27,6 @@
     <ClInclude Include="Point.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Static.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="Ball.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="TriMesh.hpp">
       <Filter>头文件</Filter>
     </ClInclude>

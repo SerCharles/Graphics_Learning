@@ -154,9 +154,7 @@
     <ClInclude Include="Board.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="Light.hpp" />
-    <ClInclude Include="Ball.hpp" />
     <ClInclude Include="Point.hpp" />
-    <ClInclude Include="Static.hpp" />
     <ClInclude Include="TriMesh.hpp" />
   </ItemGroup>
   <ItemGroup>

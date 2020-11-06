@@ -3,11 +3,9 @@
 #include<math.h>
 #include<windows.h>
 #include "Point.hpp"
-#include "Ball.hpp"
 #include "Light.hpp"
 #include "Camera.hpp"
 #include "Board.hpp"
-#include "Static.hpp"
 #include "TriMesh.hpp"
 using namespace std;
 
@@ -29,12 +27,8 @@ Light TheLight;
 
 //物体
 Board BoardA; //边界
-//小球
-Ball BallA; 
-//静态的物体
-Static StaticA;
 //面片物体
-TriMesh MeshA;
+TriMesh Bunny, Dragon, Happy;
 
 
 //初始化函数集合
@@ -117,61 +111,61 @@ void InitBoards()
 	
 }
 
-//初始化静态物体
-void InitStatics()
-{
-	float Size = 2;
-	float SmallRadius = 1;
-	float DownHeight = 2;
-	float UpHeight = 4;
-	StaticA.InitPlace(2, -3, 0, -6);
-;
-	//小球A的纹理，材质，颜色
-	GLfloat color[3] = { 1.0, 1.0, 0.0 };
-	GLfloat ambient[3] = { 0.4, 0.4, 0.2 };
-	GLfloat diffuse[3] = { 1, 0, 0.8 };
-	GLfloat specular[3] = { 0.5, 0.5, 0.3 };
-	GLfloat shininess = 60;
-	StaticA.InitColor(color, ambient, diffuse, specular, shininess);
-	
-}
-
-//初始化小球
-void InitBalls()
-{
-	//小球A的位置
-	float radius_a = 1;
-	Point place_a = Point(3, 0, -3);
-
-	//小球A的纹理，材质，颜色
-	GLfloat color_a[3] = { 1.0, 0.0, 0.0 };
-	GLfloat ambient_a[3] = { 0.4, 0.2, 0.2 };
-	GLfloat diffuse_a[3] = { 1, 0.8, 0.8 };
-	GLfloat specular_a[3] = { 0.5, 0.3, 0.3 };
-	GLfloat shininess_a = 10;
-
-	//初始化小球A
-	BallA.InitPlace(place_a.x, place_a.z, radius_a, BallComplexity);
-	BallA.InitColor(color_a, ambient_a, diffuse_a, specular_a, shininess_a);
-}
 
 
 //初始化面片
 void InitMeshs()
 {
-	//面片的大小，位置
-	float size = 2;
-	Point center = Point(0, 4, 4);
-	
-	//面片的纹理，材质，颜色
-	GLfloat color[3] = { 0.0, 0.0, 1.0 };
-	GLfloat ambient[3] = { 0.2, 0.2, 0.6 };
-	GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
-	GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-	GLfloat shininess = 20;
+	//兔子
+	{
+		//面片的大小，位置
+		float size = 2;
+		Point center = Point(0, 4, 4);
 
-	MeshA.InitPlace("model.ply", 2, center);
-	MeshA.InitColor(color, ambient, diffuse, specular, shininess);
+		//面片的纹理，材质，颜色
+		GLfloat color[3] = { 0.0, 0.0, 1.0 };
+		GLfloat ambient[3] = { 0.2, 0.2, 0.6 };
+		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
+		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
+		GLfloat shininess = 20;
+
+		Bunny.InitPlace("bunny.ply", size, center);
+		Bunny.InitColor(color, ambient, diffuse, specular, shininess);
+	}
+
+	//龙
+	{
+		//面片的大小，位置
+		float size = 2;
+		Point center = Point(-5, 5, -3);
+
+		//面片的纹理，材质，颜色
+		GLfloat color[3] = { 1.0, 0.0, 0.0 };
+		GLfloat ambient[3] = { 0.6, 0.2, 0.2 };
+		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
+		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
+		GLfloat shininess = 40;
+
+		Dragon.InitPlace("dragon.ply", size, center);
+		Dragon.InitColor(color, ambient, diffuse, specular, shininess);
+	}
+
+	//佛
+	{
+		//面片的大小，位置
+		float size = 2;
+		Point center = Point(5, 4, -3);
+
+		//面片的纹理，材质，颜色
+		GLfloat color[3] = { 1.0, 1.0, 0.0 };
+		GLfloat ambient[3] = { 0.6, 0.6, 0.2 };
+		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
+		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
+		GLfloat shininess = 60;
+
+		Happy.InitPlace("happy.ply", size, center);
+		Happy.InitColor(color, ambient, diffuse, specular, shininess);
+	}
 }
 
 //初始化的主函数
@@ -181,8 +175,6 @@ void InitScene()
 	InitLight();
 	InitCamera();
 	InitBoards();
-	InitStatics();
-	InitBalls();
 	InitMeshs();
 }
 
@@ -202,22 +194,14 @@ void DrawBoards()
 	BoardA.Draw();
 }
 
-//绘制静态物体
-void DrawStatics()
-{
-	StaticA.Draw();
-}
-
-//绘制小球
-void DrawBalls()
-{
-	BallA.Draw();
-}
 
 //绘制mesh
 void DrawMeshs()
 {
-	MeshA.Draw();
+	Bunny.Draw();
+	Dragon.Draw();
+	Happy.Draw();
+
 }
 
 //绘制的主函数
@@ -225,9 +209,7 @@ void DrawScene()
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//清除颜色缓存
 	SetCamera();//设置相机
-	DrawStatics();//绘制静态物体
 	DrawBoards();//绘制地板和边框
-	DrawBalls();//绘制小球
 	DrawMeshs();//绘制面片
 	glutSwapBuffers();
 }

@@ -44,6 +44,9 @@ public:
 class TriMesh
 {
 public:
+	//存储位置
+	string BaseDir = "res//";
+	string FullDir = BaseDir;
 	//位置信息：大小和中心；点和面片的个数；点和面片的位置以及面片的点id
 	float Size;
 	Point Center;
@@ -117,39 +120,99 @@ public:
 	}
 
 	/*
+	描述：string转int
+	参数：string
+	返回：int
+	*/
+	int StringToInt(string str)
+	{
+		int length = str.size();
+		int int_base = 1;
+		int sum = 0;
+		for (int i = length - 1; i >= 0; i--)
+		{
+			sum += (str[i] - '0') * int_base;
+			int_base *= 10;
+		}
+		return sum;
+	}
+
+	/*
+	描述：读取ply文件头
+	参数：文件流
+	返回：property个数
+	*/
+	int ReadPLYHead(fstream& f)
+	{
+		int properties = 0;
+		while (1)
+		{
+			string line;
+			string vertex_line = "element vertex ";
+			string face_line = "element face ";
+			string property_line = "property";
+			string end_line = "end_header";
+			getline(f, line);
+			string substr_15 = line.substr(0, 15);
+			string substr_13 = line.substr(0, 13);
+			string substr_8 = line.substr(0, 8);
+			if (substr_15 == vertex_line)
+			{
+				string vertex_num = line.substr(15);
+				VertexNum = StringToInt(vertex_num);
+			}
+			else if (substr_13 == face_line)
+			{
+				string face_num = line.substr(13);
+				FaceNum = StringToInt(face_num);
+			}
+			else if (substr_8 == property_line)
+			{
+				properties++;
+			}
+			else if (line == end_line)
+			{
+				break;
+			}
+
+		}
+		return properties;
+	}
+
+	/*
 	描述：初始化面片，并且进行归一化
 	参数：文件名，设置的大小，设置的相对位置
 	返回：无
 	*/
-	void InitPlace(const char filename[], float size, Point base)
+	void InitPlace(string filename, float size, Point base)
 	{
+		FullDir += filename;
 		Size = size;
 		Center = base;
-		VertexNum = 35947;
-		FaceNum = 69451;
-		int HeadLen = 12;
-		fstream f(filename);
+		VertexNum = 0;
+		FaceNum = 0;
+		fstream f(FullDir);
 
-		//前12行是头
-		string line;
-		for (int i = 0; i < HeadLen; i++)
-		{
-			getline(f, line);
-		}
+		int properties = ReadPLYHead(f);
 
-		//之后35947行每行五个数字，前三个xyz
+		//之后VertexNum行每行数字和，前三个xyz
 		for (int i = 0; i < VertexNum; i++)
 		{
-			float x, y, z, confidence, intensity;
-			f >> x >> y >> z >> confidence >> intensity;
+			float x, y, z;
+			f >> x >> y >> z ;
 			Point nova(x, y, z);
 			Vertexs.push_back(nova);
+			for (int i = 3; i < properties - 1; i++)
+			{
+				float temp;
+				f >> temp;
+			}
 		}
 		//归一化
 		NormalizeVertexs();
 
 
-		//之后69451行每行4个数字，3，以及三个点编号
+		//之后FaceNum行每行4个数字，3，以及三个点编号
 		for (int i = 0; i < FaceNum; i++)
 		{
 			int num, v1_num, v2_num, v3_num;
