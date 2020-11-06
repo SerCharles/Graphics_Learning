@@ -60,4 +60,23 @@ public:
 		Shininess[0] = shininess;
 	}
 
+	//ªÊ÷∆◊‘…Ì
+	void Draw()
+	{
+		glColor3f(Color[0], Color[1], Color[2]);
+		glMaterialfv(GL_FRONT, GL_AMBIENT, Ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, Diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, Specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
+
+
+		DrawRectangle(BottomPoints[0], BottomPoints[1], UpPoints[1], UpPoints[0]);
+		DrawRectangle(BottomPoints[1], BottomPoints[2], UpPoints[2], UpPoints[1]);
+		DrawRectangle(BottomPoints[2], BottomPoints[3], UpPoints[3], UpPoints[2]);
+		DrawRectangle(BottomPoints[3], BottomPoints[0], UpPoints[0], UpPoints[3]);
+		DrawRectangle(UpPoints[0], UpPoints[1], UpPoints[2], UpPoints[3]);
+		DrawRectangle(BottomPoints[0], BottomPoints[1], BottomPoints[2], BottomPoints[3]);
+
+		glFlush();
+	}
 };

@@ -2,21 +2,10 @@
 
 
 #include<math.h>
+#include<GL/glut.h>
 using namespace std;
 
 #define PI 3.1415926
-
-/*float max(float a, float b)
-{
-	if (a > b) return a;
-	return b;
-}
-
-float min(float a, float b)
-{
-	if (a < b) return a;
-	return b;
-}*/
 
 //3D点的基类
 class Point
@@ -75,5 +64,39 @@ public:
 		sum += z * b.z;
 		return sum;
 	}
+	Point operator/(const float& b)
+	{
+		Point c;
+		c.x = x / b;
+		c.y = y / b;
+		c.z = z / b;
+		return c;
+	}
+
+
+	float Square()
+	{
+		return x * x + y * y + z * z;
+	}
 };
 
+//绘制一个四边形
+void DrawRectangle(Point a, Point b, Point c, Point d)
+{
+	glBegin(GL_POLYGON);
+	glVertex3f(a.x, a.y, a.z);
+	glVertex3f(b.x, b.y, b.z);
+	glVertex3f(c.x, c.y, c.z);
+	glVertex3f(d.x, d.y, d.z);
+	glEnd();
+}
+
+//绘制一个三角形
+void DrawTriangle(Point a, Point b, Point c)
+{
+	glBegin(GL_POLYGON);
+	glVertex3f(a.x, a.y, a.z);
+	glVertex3f(b.x, b.y, b.z);
+	glVertex3f(c.x, c.y, c.z);
+	glEnd();
+}

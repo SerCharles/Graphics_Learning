@@ -8,7 +8,12 @@
 #include "Camera.hpp"
 #include "Board.hpp"
 #include "Static.hpp"
+//#include "TriMesh.hpp"
 using namespace std;
+
+
+
+
 
 
 //全局常量
@@ -23,12 +28,13 @@ Camera TheCamera;
 Light TheLight;
 
 //物体
-Board Boards[5]; //边界
+Board BoardA; //边界
 //小球
 Ball BallA; 
 //静态的物体
 Static StaticA;
-
+//面片物体
+//TriMesh MeshA;
 
 
 //初始化函数集合
@@ -83,22 +89,14 @@ void InitCamera()
 //初始化边界和地板
 void InitBoards()
 {
-	//8个点
+	//4个点
 	Point DownA(-XRange, 0, -ZRange);
 	Point DownB(-XRange, 0, ZRange);
 	Point DownC(XRange, 0, -ZRange);
 	Point DownD(XRange, 0, ZRange);
-	Point UpA(-XRange, Height, -ZRange);
-	Point UpB(-XRange, Height, ZRange);
-	Point UpC(XRange, Height, -ZRange);
-	Point UpD(XRange, Height, ZRange);
 
 	//设置地板和挡板位置
-	Boards[0].InitPlace(DownA, DownB, DownD, DownC);
-	Boards[1].InitPlace(DownA, DownB, UpB, UpA);
-	Boards[2].InitPlace(DownC, DownD, UpD, UpC);
-	Boards[3].InitPlace(DownA, DownC, UpC, UpA);
-	Boards[4].InitPlace(DownB, DownD, UpD, UpB);
+	BoardA.InitPlace(DownA, DownB, DownD, DownC);
 
 	//地板材质
 	GLfloat color_floor[3] = { 1.0, 1.0, 1.0 };
@@ -106,7 +104,7 @@ void InitBoards()
 	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2};
 	GLfloat specular_floor[3] = { 0.4, 0.4, 0.4};
 	GLfloat shininess_floor = 90;
-	Boards[0].InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
+	BoardA.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
 
 	//设置四周挡板材质
 	GLfloat color_border[3] = { 1.0, 1.0, 1.0 };
@@ -114,10 +112,9 @@ void InitBoards()
 	GLfloat diffuse_border[3] = { 0.2, 0.2, 0.2};
 	GLfloat specular_border[3] = { 0.2, 0.2, 0.2};
 	GLfloat shininess_border = 40;
-	for (int i = 1; i < 5; i++)
-	{
-		Boards[i].InitColor(color_border, ambient_border, diffuse_border, specular_border, shininess_border);
-	}
+
+	BoardA.InitColor(color_border, ambient_border, diffuse_border, specular_border, shininess_border);
+	
 }
 
 //初始化静态物体
@@ -129,8 +126,6 @@ void InitStatics()
 	float UpHeight = 4;
 	StaticA.InitPlace(2, -3, 0, -6);
 ;
-	
-	
 	//小球A的纹理，材质，颜色
 	GLfloat color[3] = { 1.0, 1.0, 0.0 };
 	GLfloat ambient[3] = { 0.4, 0.4, 0.2 };
@@ -142,9 +137,9 @@ void InitStatics()
 }
 
 //初始化小球
-void InitMovingBalls()
+void InitBalls()
 {
-	//小球A的位置，速度
+	//小球A的位置
 	float radius_a = 1;
 	Point place_a = Point(3, 0, -3);
 
@@ -156,19 +151,39 @@ void InitMovingBalls()
 	GLfloat shininess_a = 10;
 
 	//初始化小球A
-	BallA.InitPlace(place_a.x, place_a.z, radius_a);
+	BallA.InitPlace(place_a.x, place_a.z, radius_a, BallComplexity);
 	BallA.InitColor(color_a, ambient_a, diffuse_a, specular_a, shininess_a);
 }
 
+/*
+//初始化面片
+void InitMeshs()
+{
+	//面片的大小，位置
+	float size = 2;
+	Point center = Point(0, 4, 4);
+	
+	//面片的纹理，材质，颜色
+	GLfloat color[3] = { 0.0, 0.0, 1.0 };
+	GLfloat ambient[3] = { 0.2, 0.2, 0.6 };
+	GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
+	GLfloat specular[3] = { 0.2, 0.2, 0.2 };
+	GLfloat shininess = 20;
+
+	MeshA.InitPlace("model.ply", 2, center);
+	MeshA.InitColor(color, ambient, diffuse, specular, shininess);
+}
+*/
 //初始化的主函数
+
 void InitScene()
 {
-
 	InitLight();
 	InitCamera();
 	InitBoards();
 	InitStatics();
-	InitMovingBalls();
+	InitBalls();
+	//InitMeshs();
 }
 
 //绘制函数集合
@@ -181,83 +196,28 @@ void SetCamera()
 	gluLookAt(camera_place.x, camera_place.y, camera_place.z, camera_center.x, camera_center.y, camera_center.z, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
 }
 
-//绘制边界和地板
+//绘制边界
 void DrawBoards()
 {
-	for (int i = 0; i < 5; i++)
-	{
-		glColor3f(Boards[i].Color[0], Boards[i].Color[1], Boards[i].Color[2]);
-		glMaterialfv(GL_FRONT, GL_AMBIENT, Boards[i].Ambient);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, Boards[i].Diffuse);
-		glMaterialfv(GL_FRONT, GL_SPECULAR, Boards[i].Specular);
-		glMaterialfv(GL_FRONT, GL_SHININESS, Boards[i].Shininess);
-
-
-		glBegin(GL_POLYGON);
-		glVertex3f(Boards[i].PointList[0].x, Boards[i].PointList[0].y, Boards[i].PointList[0].z);
-		glVertex3f(Boards[i].PointList[1].x, Boards[i].PointList[1].y, Boards[i].PointList[1].z);
-		glVertex3f(Boards[i].PointList[2].x, Boards[i].PointList[2].y, Boards[i].PointList[2].z);
-		glVertex3f(Boards[i].PointList[3].x, Boards[i].PointList[3].y, Boards[i].PointList[3].z);
-		glEnd();
-		glFlush();
-	}
-	
-}
-
-
-void DrawPolygon(Point a, Point b, Point c, Point d)
-{
-	glBegin(GL_POLYGON);
-	glVertex3f(a.x, a.y, a.z);
-	glVertex3f(b.x, b.y, b.z);
-	glVertex3f(c.x, c.y, c.z);
-	glVertex3f(d.x, d.y, d.z);
-	glEnd();
+	BoardA.Draw();
 }
 
 //绘制静态物体
 void DrawStatics()
 {
-	glColor3f(StaticA.Color[0], StaticA.Color[1], StaticA.Color[2]);
-	glMaterialfv(GL_FRONT, GL_AMBIENT, StaticA.Ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, StaticA.Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, StaticA.Specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, StaticA.Shininess);
-
-
-	DrawPolygon(StaticA.BottomPoints[0], StaticA.BottomPoints[1], StaticA.UpPoints[1], StaticA.UpPoints[0]);
-	DrawPolygon(StaticA.BottomPoints[1], StaticA.BottomPoints[2], StaticA.UpPoints[2], StaticA.UpPoints[1]);
-	DrawPolygon(StaticA.BottomPoints[2], StaticA.BottomPoints[3], StaticA.UpPoints[3], StaticA.UpPoints[2]);
-	DrawPolygon(StaticA.BottomPoints[3], StaticA.BottomPoints[0], StaticA.UpPoints[0], StaticA.UpPoints[3]);
-	DrawPolygon(StaticA.UpPoints[0], StaticA.UpPoints[1], StaticA.UpPoints[2], StaticA.UpPoints[3]);
-	DrawPolygon(StaticA.BottomPoints[0], StaticA.BottomPoints[1], StaticA.BottomPoints[2], StaticA.BottomPoints[3]);
-
-	glFlush();
-
-}
-
-
-//绘制一个小球
-void DrawOneBall(Ball& ball)
-{
-	//设置纹理，材质等信息
-	glMaterialfv(GL_FRONT, GL_AMBIENT, ball.Ambient);
-	glMaterialfv(GL_FRONT, GL_DIFFUSE, ball.Diffuse);
-	glMaterialfv(GL_FRONT, GL_SPECULAR, ball.Specular);
-	glMaterialfv(GL_FRONT, GL_SHININESS, ball.Shininess);
-
-	//平移到坐标原点，绘制，恢复坐标
-	glPushMatrix();
-	glTranslatef(ball.CurrentPlace.x, ball.CurrentPlace.y, ball.CurrentPlace.z);
-	glutSolidSphere(ball.Radius, BallComplexity, BallComplexity);
-	glPopMatrix();
+	StaticA.Draw();
 }
 
 //绘制小球
 void DrawBalls()
 {
-	//绘制小球
-	DrawOneBall(BallA);
+	BallA.Draw();
+}
+
+//绘制mesh
+void DrawMeshs()
+{
+	
 }
 
 //绘制的主函数
@@ -352,9 +312,10 @@ void reshape(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
+
 int main(int argc, char**argv)
 {
-
+	
 	glutInit(&argc, argv); 
 	InitWindow();             //初始化窗口
 	InitScene();              //初始化场景

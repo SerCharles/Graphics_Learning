@@ -75,5 +75,14 @@ public:
 		return dist / norm;
 	}
 
-	
+	//ªÊ÷∆◊‘…Ì
+	void Draw()
+	{
+		glColor3f(Color[0], Color[1], Color[2]);
+		glMaterialfv(GL_FRONT, GL_AMBIENT, Ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, Diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, Specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
+		DrawRectangle(PointList[0], PointList[1], PointList[2], PointList[3]);
+	}
 };

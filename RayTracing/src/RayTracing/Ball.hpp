@@ -10,9 +10,10 @@ using namespace std;
 class Ball
 {
 public:
-	//位置，速度信息
+	//位置信息
 	Point CurrentPlace;
 	float Radius;
+	int Complexity;
 
 	//材质，纹理，颜色信息
 	GLfloat Color[3] = { 0, 0, 0 }; //颜色
@@ -24,10 +25,11 @@ public:
 	Ball(){}
 
 	//初始化位置，速度信息
-	void InitPlace(float x, float z, float radius)
+	void InitPlace(float x, float z, float radius, int complexity)
 	{
 		CurrentPlace.SetPlace(x, radius, z);
 		Radius = radius;
+		Complexity = complexity;
 	}
 
 	//初始化颜色，纹理，材质信息
@@ -53,4 +55,19 @@ public:
 		return sqrt((p - CurrentPlace) * (p - CurrentPlace));
 	}
 
+	//绘制自身
+	void Draw()
+	{
+		//设置纹理，材质等信息
+		glMaterialfv(GL_FRONT, GL_AMBIENT, Ambient);
+		glMaterialfv(GL_FRONT, GL_DIFFUSE, Diffuse);
+		glMaterialfv(GL_FRONT, GL_SPECULAR, Specular);
+		glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
+
+		//平移到坐标原点，绘制，恢复坐标
+		glPushMatrix();
+		glTranslatef(CurrentPlace.x, CurrentPlace.y, CurrentPlace.z);
+		glutSolidSphere(Radius, Complexity, Complexity);
+		glPopMatrix();
+	}
 };
