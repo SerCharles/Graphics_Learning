@@ -27,10 +27,10 @@
     <ClInclude Include="GLLight.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Light.hpp">
+    <ClInclude Include="MeshModel.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MeshModel.hpp">
+    <ClInclude Include="Ray.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

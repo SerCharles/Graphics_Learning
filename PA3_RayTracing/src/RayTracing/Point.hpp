@@ -7,9 +7,10 @@
 
 #include<math.h>
 #include<GL/glut.h>
+#include<vector>
 using namespace std;
 
-#define PI 3.1415926
+#define PI 3.1415926535
 
 //3D点的基类
 class Point
@@ -129,3 +130,36 @@ public:
 		B = b;
 	}
 };
+
+/*
+描述：判断点是否在多边形内，用角度法求点和每条边交点夹角和，为2pi才在内否则在外
+参数：点，多边形
+返回：是/否
+*/
+bool JudgeInside(Point& p, vector<Point>& polygon)
+{
+	float sum_arc = 0;
+	for (int i = 0; i < polygon.size(); i++)
+	{
+		Point current = polygon[i];
+		Point next;
+		if (i == polygon.size() - 1)
+		{
+			next = polygon[0];
+		}
+		else
+		{
+			next = polygon[i + 1];
+		}
+		float a = (current - p).Dist();
+		float b = (next - p).Dist();
+		float c = (current - next).Dist();
+		float up = a * a + b * b - c * c;
+		float down = 2 * a * b;
+		if (down == 0) return 0;
+		float arc = acos(up / down);
+		sum_arc += arc;
+	}
+	if (abs(sum_arc - 2 * PI) < 0.01) return 1;
+	else return 0;
+}

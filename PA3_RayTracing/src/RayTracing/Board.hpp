@@ -129,4 +129,27 @@ public:
 		}
 		glFlush();
 	}
+
+	/*
+	描述：获取交点所在的网格坐标
+	参数：交点坐标
+	返回：网格坐标i，j；如果不在边界内，返回-1
+	*/
+	void GetIntersectionID(Point intersection, int& i, int& j)
+	{
+		i = int((intersection.x - XLow) / XSize);
+		j = int((intersection.z - ZLow) / ZSize);
+		if (i < 0 || i >= XNum)
+		{
+			i = -1;
+			j = -1;
+			return;
+		}
+		if (j < 0 || j >= ZNum)
+		{
+			i = -1;
+			j = -1;
+			return;
+		}
+	}
 };

@@ -154,7 +154,7 @@
     <ClInclude Include="Board.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="GLLight.hpp" />
-    <ClInclude Include="Light.hpp" />
+    <ClInclude Include="Ray.hpp" />
     <ClInclude Include="Point.hpp" />
     <ClInclude Include="MeshModel.hpp" />
   </ItemGroup>
