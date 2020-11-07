@@ -1,35 +1,68 @@
+/*
+描述：光线追踪光源和光线定义
+日期：2020/11/7
+*/
 #pragma once
-#include<GL/glut.h>
+#include<cmath>
+#include"Point.hpp"
+#include"Board.hpp"
+#include"MeshModel.hpp"
 
-class Light
+
+
+class Ray
 {
+
 public:
-	GLfloat Color[4] = { 0, 0, 0, 0 }; //背景颜色
-	GLfloat Ambient[4] = { 0, 0, 0, 0 }; //环境光
-	GLfloat Diffuse[4] = { 0, 0, 0, 0 }; //漫反射
-	GLfloat Specular[4] = { 0, 0, 0, 0 }; //镜面反射
-	GLfloat Position[4] = { 0, 0, 0, 0 }; //镜面指数
+	Point StartPlace;
+	Point Direction;
+	Color TheColor;
+	float Intensity;
 
-	Light() {}
+	Ray(){}
 
-	//初始化
-	void Init(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat position[])
+	void Init(Point start, Point direction, Color color, float intensity)
 	{
-		for (int i = 0; i < 3; i++)
-		{
-			Color[i] = color[i];
-			Ambient[i] = ambient[i];
-			Diffuse[i] = diffuse[i];
-			Specular[i] = specular[i];
-			Position[i] = position[i];
-		}
-		//透明度：1
-		Color[3] = 1.0;
-		Ambient[3] = 1.0;
-		Diffuse[3] = 1.0;
-		Specular[3] = 1.0;
+		StartPlace = start;
+		Direction = direction;
+		TheColor = color;
+		Intensity = intensity;
+	}
 
-		//无限远处平行光
-		Position[3] = 1.0; 
+	/*
+	描述：和边界求交（默认y=0）
+	参数：边界
+	返回：有交点返回交点对应的光线t值，否则返回-1
+	*/
+	float GetIntersection(Board& b)
+	{
+		/*
+		float current_y = StartPlace.y;
+		float dy = Direction.y;
+		if (dy == 0)
+		{
+			return -1;
+		}
+		float t = (b.Y - current_y) / dy;
+		if (t <= 0)
+		{
+			return -1;
+		}
+		
+		Point intersection_point = StartPlace + Direction * t;
+		intersection_point.y = b.Y;
+		if(intersection_point.x <= b.XHigh && intersection_point.x >= b.XLow && intersection_point.x)
+		*/
+		return 0;
+	}
+
+	/*
+	描述：和面片求交
+	参数：边界
+	返回：有交点返回交点对应的光线t值，否则返回-1
+	*/
+	float GetIntersection(Board& b)
+	{
+		return 0;
 	}
 };

@@ -153,9 +153,10 @@
   <ItemGroup>
     <ClInclude Include="Board.hpp" />
     <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="GLLight.hpp" />
     <ClInclude Include="Light.hpp" />
     <ClInclude Include="Point.hpp" />
-    <ClInclude Include="TriMesh.hpp" />
+    <ClInclude Include="MeshModel.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />

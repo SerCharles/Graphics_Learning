@@ -1,3 +1,7 @@
+/*
+描述：OpenGL相机视角定义
+日期：2020/11/6
+*/
 #pragma once
 #include<math.h>
 #include"Point.hpp"

@@ -1,3 +1,7 @@
+/*
+描述：三角面片和模型类
+日期：2020/11/6
+*/
 #pragma once
 #include"Point.hpp"
 #include<iostream>
@@ -10,18 +14,57 @@
 using namespace std;
 
 //三角面片定义
-class Triangle
+class TriangleMesh
 {
 public:
 	Point v1;
 	Point v2;
 	Point v3;
-	Triangle(){}
+	Point Norm;
+
+	//材质，纹理，颜色信息
+	GLfloat Color[3] = { 0, 0, 0 }; //颜色
+	GLfloat Ambient[4] = { 0, 0, 0, 0 }; //环境光
+	GLfloat Diffuse[4] = { 0, 0, 0, 0 }; //漫反射
+	GLfloat Specular[4] = { 0, 0, 0, 0 }; //镜面反射
+	GLfloat Shininess[4] = { 0 }; //镜面指数
+
+	TriangleMesh(){}
+	
+	void GetNorm()
+	{
+		Point l1 = v1 - v2;
+		Point l2 = v2 - v3;
+		float norm_x = (l1.y * l2.z) - (l1.z * l2.y);
+		float norm_y = -((l1.x * l2.z) - (l1.z * l2.x));
+		float norm_z = (l1.x * l2.y) - (l1.y * l2.x);
+		Norm.SetPlace(norm_x, norm_y, norm_z);
+		float size = sqrt(Norm.Square());
+		Norm = Norm / size;
+	}
+
 	void InitPlace(Point a, Point b, Point c)
 	{
 		v1 = a;
 		v2 = b;
 		v3 = c;
+		GetNorm();
+	}
+
+	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			Color[i] = color[i];
+			Ambient[i] = ambient[i];
+			Diffuse[i] = diffuse[i];
+			Specular[i] = specular[i];
+		}
+		//透明度：1
+		Ambient[3] = 1.0;
+		Diffuse[3] = 1.0;
+		Specular[3] = 1.0;
+		Shininess[0] = shininess;
 	}
 };
 
@@ -41,7 +84,7 @@ public:
 	}
 };
 
-class TriMesh
+class MeshModel
 {
 public:
 	//存储位置
@@ -53,9 +96,9 @@ public:
 	int VertexNum;
 	int FaceNum;
 	vector<Point> Vertexs;
-	vector<Triangle> Faces;
+	vector<TriangleMesh> Faces;
 	vector<MeshPoints> FaceIDs;
-	TriMesh() {}
+	MeshModel() {}
 
 	//材质，纹理，颜色信息
 	GLfloat Color[3] = { 0, 0, 0 }; //颜色
@@ -79,6 +122,10 @@ public:
 		Diffuse[3] = 1.0;
 		Specular[3] = 1.0;
 		Shininess[0] = shininess;
+		for (int i = 0; i < FaceNum; i++)
+		{
+			Faces[i].InitColor(color, ambient, diffuse, specular, shininess);
+		}
 	}
 
 	/*
@@ -220,7 +267,7 @@ public:
 			Point v1 = Vertexs[v1_num];
 			Point v2 = Vertexs[v2_num];
 			Point v3 = Vertexs[v3_num];
-			Triangle nova;
+			TriangleMesh nova;
 			nova.InitPlace(v1, v2, v3);
 			MeshPoints nova_num;
 			nova_num.InitPlace(v1_num, v2_num, v3_num);
@@ -232,15 +279,14 @@ public:
 	//绘制自身
 	void Draw()
 	{
-		glColor3f(Color[0], Color[1], Color[2]);
-		glMaterialfv(GL_FRONT, GL_AMBIENT, Ambient);
-		glMaterialfv(GL_FRONT, GL_DIFFUSE, Diffuse);
-		glMaterialfv(GL_FRONT, GL_SPECULAR, Specular);
-		glMaterialfv(GL_FRONT, GL_SHININESS, Shininess);
-
 		for (int i = 0; i < FaceNum; i++)
 		{
-			Triangle the_face = Faces[i];
+			TriangleMesh the_face = Faces[i];
+			glColor3f(the_face.Color[0], the_face.Color[1], the_face.Color[2]);
+			glMaterialfv(GL_FRONT, GL_AMBIENT, the_face.Ambient);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, the_face.Diffuse);
+			glMaterialfv(GL_FRONT, GL_SPECULAR, the_face.Specular);
+			glMaterialfv(GL_FRONT, GL_SHININESS, the_face.Shininess);
 			DrawTriangle(the_face.v1, the_face.v2, the_face.v3);
 		}
 		glFlush();

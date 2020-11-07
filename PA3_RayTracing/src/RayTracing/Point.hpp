@@ -1,3 +1,7 @@
+/*
+描述：3D点类和各种常用函数
+日期：2020/11/6
+*/
 #pragma once
 
 
@@ -78,6 +82,11 @@ public:
 	{
 		return x * x + y * y + z * z;
 	}
+
+	float Dist()
+	{
+		return sqrt(Square());
+	}
 };
 
 //绘制一个四边形
@@ -100,3 +109,23 @@ void DrawTriangle(Point a, Point b, Point c)
 	glVertex3f(c.x, c.y, c.z);
 	glEnd();
 }
+
+class Color
+{
+public:
+	float R;
+	float G;
+	float B;
+	Color()
+	{
+		R = 0;
+		G = 0;
+		B = 0;
+	}
+	Color(float r, float g, float b)
+	{
+		R = r;
+		G = g;
+		B = b;
+	}
+};

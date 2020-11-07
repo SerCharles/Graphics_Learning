@@ -3,32 +3,34 @@
 #include<math.h>
 #include<windows.h>
 #include "Point.hpp"
-#include "Light.hpp"
+#include "GLLight.hpp"
 #include "Camera.hpp"
 #include "Board.hpp"
-#include "TriMesh.hpp"
+#include "MeshModel.hpp"
 using namespace std;
 
-
-
-
+#define OPENGL_LIGHT 1
+#define RAY_TRACE 2
+#define RAY_TRACE_ACCELERATE 3
 
 
 //全局常量
 const int WindowSizeX = 800, WindowSizeY = 600, WindowPlaceX = 100, WindowPlaceY = 100;
 const char WindowName[] = "MyScene";
 const float TimeOnce = 0.02; //刷新时间
-const float XRange = 10, ZRange = 10, Height = 8; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
+const float XRange = 10, ZRange = 10, Height = 8, YFloor = 0; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
 const int BallComplexity = 40; //小球绘制精细程度
+int CurrentMode = -1; //模式：模式1是OpenGL光照，模式2是光线追踪
+
 
 //光照，相机
 Camera TheCamera;
-Light TheLight;
+GLLight TheGLLight;
 
 //物体
-Board BoardA; //边界
+Board Floor; //边界
 //面片物体
-TriMesh Bunny, Dragon, Happy;
+MeshModel Bunny, Dragon, Happy;
 
 
 //初始化函数集合
@@ -45,27 +47,27 @@ void InitWindow()
 	printf("OGLU工具库版本：%s\n", gluVersion);
 }
 
-//初始化光照
-void InitLight()
+//初始化OpenGL光照
+void InitGLLight()
 {
 	GLfloat background_color[3] = { 0.0, 0.0, 0.0 };
 	GLfloat ambient[3] = { 1, 1, 1};
 	GLfloat diffuse[3] = { 1, 1, 1};
 	GLfloat specular[3] = { 1, 1, 1};
 	GLfloat position[3] = { 0.0f, 10.0f, 0.0f};
-	TheLight.Init(background_color, ambient, diffuse, specular, position);
+	TheGLLight.Init(background_color, ambient, diffuse, specular, position);
 
 	//设置着色模式
 	glShadeModel(GL_SMOOTH);
 	//设置初始背景色，清除颜色缓存和深度缓存
-	glClearColor(TheLight.Color[0], TheLight.Color[1], TheLight.Color[2], TheLight.Color[3]);
+	glClearColor(TheGLLight.Color[0], TheGLLight.Color[1], TheGLLight.Color[2], TheGLLight.Color[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//设置光源信息
-	glLightfv(GL_LIGHT0, GL_AMBIENT, TheLight.Ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, TheLight.Diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, TheLight.Specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, TheLight.Position);
+	glLightfv(GL_LIGHT0, GL_AMBIENT, TheGLLight.Ambient);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, TheGLLight.Diffuse);
+	glLightfv(GL_LIGHT0, GL_SPECULAR, TheGLLight.Specular);
+	glLightfv(GL_LIGHT0, GL_POSITION, TheGLLight.Position);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	
@@ -83,34 +85,17 @@ void InitCamera()
 //初始化边界和地板
 void InitBoards()
 {
-	//4个点
-	Point DownA(-XRange, 0, -ZRange);
-	Point DownB(-XRange, 0, ZRange);
-	Point DownC(XRange, 0, -ZRange);
-	Point DownD(XRange, 0, ZRange);
-
 	//设置地板和挡板位置
-	BoardA.InitPlace(DownA, DownB, DownD, DownC);
+	Floor.InitPlace(XRange, -XRange, ZRange, -ZRange, YFloor);
 
 	//地板材质
 	GLfloat color_floor[3] = { 1.0, 1.0, 1.0 };
-	GLfloat ambient_floor[3] = { 0.4, 0.4, 0.4};
+	GLfloat ambient_floor[3] = { 0.2, 0.2, 0.2};
 	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2};
-	GLfloat specular_floor[3] = { 0.4, 0.4, 0.4};
-	GLfloat shininess_floor = 90;
-	BoardA.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
-
-	//设置四周挡板材质
-	GLfloat color_border[3] = { 1.0, 1.0, 1.0 };
-	GLfloat ambient_border[3] = { 0.2, 0.2, 0.2};
-	GLfloat diffuse_border[3] = { 0.2, 0.2, 0.2};
-	GLfloat specular_border[3] = { 0.2, 0.2, 0.2};
-	GLfloat shininess_border = 40;
-
-	BoardA.InitColor(color_border, ambient_border, diffuse_border, specular_border, shininess_border);
-	
+	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2};
+	GLfloat shininess_floor = 40;
+	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
 }
-
 
 
 //初始化面片
@@ -144,7 +129,7 @@ void InitMeshs()
 		GLfloat ambient[3] = { 0.6, 0.2, 0.2 };
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-		GLfloat shininess = 40;
+		GLfloat shininess = 50;
 
 		Dragon.InitPlace("dragon.ply", size, center);
 		Dragon.InitColor(color, ambient, diffuse, specular, shininess);
@@ -161,7 +146,7 @@ void InitMeshs()
 		GLfloat ambient[3] = { 0.6, 0.6, 0.2 };
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-		GLfloat shininess = 60;
+		GLfloat shininess = 80;
 
 		Happy.InitPlace("happy.ply", size, center);
 		Happy.InitColor(color, ambient, diffuse, specular, shininess);
@@ -172,7 +157,10 @@ void InitMeshs()
 
 void InitScene()
 {
-	InitLight();
+	if (CurrentMode == OPENGL_LIGHT)
+	{
+		InitGLLight();
+	}
 	InitCamera();
 	InitBoards();
 	InitMeshs();
@@ -191,7 +179,7 @@ void SetCamera()
 //绘制边界
 void DrawBoards()
 {
-	BoardA.Draw();
+	Floor.Draw();
 }
 
 
@@ -286,7 +274,7 @@ void OnSpecialKeyClick(GLint key, GLint x, GLint y)
 
 
 //reshape函数
-void reshape(int w, int h)
+void Reshape(int w, int h)
 {
 	glViewport(0, 0, w, h);
 	glMatrixMode(GL_PROJECTION);
@@ -295,14 +283,50 @@ void reshape(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
+//选择全局模式
+void ChooseMode()
+{
+	while (1)
+	{
+		cout << "请输入要使用的模式" << endl;
+		cout << "1：OpenGL光照模型" << endl;
+		cout << "2：光线追踪基本模型" << endl;
+		cout << "3：光线追踪加速模型" << endl;
+		int mode;
+		cin >> mode;
+		if (mode == OPENGL_LIGHT || mode == RAY_TRACE || mode == RAY_TRACE_ACCELERATE)
+		{
+			CurrentMode = mode;
+			break;
+		}
+		else
+		{
+			cout << "输入不合法，请重新输入！" << endl;
+			cout << "---------------------------------------" << endl;
+		}
+	}
+	cout << "当前模式为";
+	if (CurrentMode == OPENGL_LIGHT)
+	{
+		cout << "1：OpenGL光照模型" << endl;
+	}
+	else if (CurrentMode == RAY_TRACE)
+	{
+		cout << "2：光线追踪基本模型" << endl;
+	}
+	else if (CurrentMode == RAY_TRACE_ACCELERATE)
+	{
+		cout << "3：光线追踪加速模型" << endl;
+	}
+}
 
 int main(int argc, char**argv)
 {
-	
+	ChooseMode();
 	glutInit(&argc, argv); 
 	InitWindow();             //初始化窗口
 	InitScene();              //初始化场景
-	glutReshapeFunc(reshape); //绑定reshape函数
+	glutReshapeFunc(Reshape); //绑定reshape函数
 	glutDisplayFunc(DrawScene); //绑定显示函数
 	glutTimerFunc(20, OnTimer, 1);  //启动计时器
 	glutMouseFunc(OnMouseClick); //绑定鼠标点击函数
