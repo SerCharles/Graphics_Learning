@@ -163,3 +163,23 @@ bool JudgeInside(Point& p, vector<Point>& polygon)
 	if (abs(sum_arc - 2 * PI) < 0.01) return 1;
 	else return 0;
 }
+
+/*
+描述：获得最小正值的id
+参数：数值组成的vector
+返回：id,如果没有正值就-1
+*/
+int GetSmallestNum(vector<float> list)
+{
+	float min_num = 14530529;
+	int min_id = -1;
+	for (int i = 0; i < list.size(); i++)
+	{
+		if (list[i] > 0 && list[i] < min_num)
+		{
+			min_num = list[i];
+			min_id = i;
+		}
+	}
+	return min_id;
+}

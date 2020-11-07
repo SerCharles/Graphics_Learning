@@ -9,6 +9,7 @@
 #include"Board.hpp"
 #include"MeshModel.hpp"
 
+const int MaxDepth = 3;
 
 
 class Ray
@@ -17,16 +18,14 @@ class Ray
 public:
 	Point StartPlace;
 	Point Direction;
-	Color TheColor;
 	float Intensity;
 
 	Ray(){}
 
-	void Init(Point start, Point direction, Color color, float intensity)
+	void Init(Point start, Point direction, float intensity)
 	{
 		StartPlace = start;
 		Direction = direction;
-		TheColor = color;
 		Intensity = intensity;
 	}
 
@@ -79,12 +78,11 @@ public:
 		intersection_point.y = b.Y;
 		Point new_direction = Point(Direction.x, -Direction.y, Direction.z);
 
-		//TODO：颜色和强度
-		Color new_color = TheColor;
+		//TODO：强度
 		float new_intensity = Intensity;
 
 		Ray new_ray;
-		new_ray.Init(intersection_point, new_direction, new_color, new_intensity);
+		new_ray.Init(intersection_point, new_direction, new_intensity);
 		return new_ray;
 	}
 
@@ -171,14 +169,13 @@ public:
 		Point tangent_speed = Direction - norm_speed;
 		Point new_direction = tangent_speed - norm_speed;
 
-		//TODO：颜色和强度
-		Color new_color = TheColor;
+		//TODO：强度
 		float new_intensity = Intensity;
 
 		Ray new_ray;
-		new_ray.Init(intersection_point, new_direction, new_color, new_intensity);
+		new_ray.Init(intersection_point, new_direction, new_intensity);
 		return new_ray;
 	}
 
-	
 };
+
