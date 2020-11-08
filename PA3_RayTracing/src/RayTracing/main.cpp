@@ -1,7 +1,8 @@
-#include<GL/glut.h>
-#include<iostream>
-#include<math.h>
-#include<windows.h>
+#include <GL/glut.h>
+#include <iostream>
+#include <math.h>
+#include <windows.h>
+#include <time.h>
 #include "Point.hpp"
 #include "GLLight.hpp"
 #include "Camera.hpp"
@@ -19,7 +20,6 @@ using namespace std;
 //全局常量
 const int WindowSizeX = 800, WindowSizeY = 600, WindowPlaceX = 100, WindowPlaceY = 100;
 const char WindowName[] = "MyScene";
-const float TimeOnce = 0.02; //刷新时间
 const float XRange = 10, ZRange = 10, Height = 8, YFloor = 0; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
 int CurrentMode = -1; //模式：模式1是OpenGL光照，模式2是光线追踪
 
@@ -98,7 +98,9 @@ void InitBoards()
 	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat shininess_floor = 40;
-	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
+	float k_reflection = 1;
+	float k_refraction = 0;
+	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor, k_reflection, k_refraction);
 }
 
 //初始化面片
@@ -116,9 +118,11 @@ void InitMeshs()
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
+		float k_reflection = 0.6;
+		float k_refraction = 0.4;
 
 		Bunny.InitPlace("bunny.ply", size, center);
-		Bunny.InitColor(color, ambient, diffuse, specular, shininess);
+		Bunny.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
 	}
 
 	//龙
@@ -133,9 +137,11 @@ void InitMeshs()
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
+		float k_reflection = 0.8;
+		float k_refraction = 0.2;
 
 		Dragon.InitPlace("dragon.ply", size, center);
-		Dragon.InitColor(color, ambient, diffuse, specular, shininess);
+		Dragon.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
 	}
 
 	//佛
@@ -150,16 +156,17 @@ void InitMeshs()
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
+		float k_reflection = 0.4;
+		float k_refraction = 0.6;
 
 		Happy.InitPlace("happy.ply", size, center);
-		Happy.InitColor(color, ambient, diffuse, specular, shininess);
+		Happy.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
 	}
 }
 
 //初始化的主函数
 void InitScene()
 {
-
 	InitLight();
 	InitCamera();
 	InitBoards();
@@ -329,6 +336,177 @@ void Reshape(int w, int h)
 	glMatrixMode(GL_MODELVIEW);
 }
 
+
+
+
+//光线追踪相关函数
+const int GridX = 50;
+const int GridY = 50;
+const float LengthX = 10;
+const float LengthY = 10;
+Color Result[GridX][GridY];
+/*
+描述：光线追踪主函数
+参数：光线，深度
+返回：得到的颜色
+*/
+Color RayTracing(Ray& the_ray, int depth)
+{
+	if (depth > MaxDepth)
+	{
+		return Color(0.0, 0.0, 0.0);
+	}
+
+	//和所有物体求交得到最近的t
+	vector<float> t_list;
+	int i_floor = -1;
+	int j_floor = -1;
+	float t_floor = -1;
+	the_ray.GetIntersection(Floor, i_floor, j_floor, t_floor);
+	t_list.push_back(t_floor);
+
+	int i_bunny = -1;
+	float t_bunny = -1;
+	the_ray.GetIntersection(Bunny, i_bunny, t_bunny);
+	t_list.push_back(t_bunny);
+
+	int i_dragon = -1;
+	float t_dragon = -1;
+	the_ray.GetIntersection(Dragon, i_dragon, t_dragon);
+	t_list.push_back(t_dragon);
+
+	int i_happy = -1;
+	float t_happy = -1;
+	the_ray.GetIntersection(Happy, i_happy, t_happy);
+	t_list.push_back(t_happy);
+
+	int min_id = GetSmallestNum(t_list);
+	if (min_id <= 0 || min_id >= 4)
+	{
+		return Color(0.0, 0.0, 0.0);
+	}
+
+	//求交点，反射光线，折射光线，颜色
+	Point intersection;
+	Ray reflection;
+	Ray refraction;
+	Color color;
+	float k_reflection = 0.0;
+	float k_refraction = 0.0;
+	if (min_id == 0)
+	{
+		RectangleMesh the_rectangle = Floor.RectangleList[i_floor][j_floor];
+		k_reflection = the_rectangle.KReflection;
+		k_refraction = the_rectangle.KRefraction;
+		color = PhongModel(TheGLLight, TheCamera, the_rectangle);
+		reflection = the_ray.GetReflection(Floor, i_floor, j_floor, t_floor);
+		intersection = reflection.StartPlace;
+	}
+	else if (min_id == 1)
+	{
+		TriangleMesh the_triangle = Bunny.Faces[i_bunny];
+		k_reflection = the_triangle.KReflection;
+		k_refraction = the_triangle.KRefraction;
+		color = PhongModel(TheGLLight, TheCamera, the_triangle);
+		reflection = the_ray.GetReflection(Bunny, i_bunny, t_bunny);
+		intersection = reflection.StartPlace;
+	}
+	else if (min_id == 2)
+	{
+		TriangleMesh the_triangle = Dragon.Faces[i_dragon];
+		k_reflection = the_triangle.KReflection;
+		k_refraction = the_triangle.KRefraction;
+		color = PhongModel(TheGLLight, TheCamera, the_triangle);
+		reflection = the_ray.GetReflection(Dragon, i_dragon, t_dragon);
+		intersection = reflection.StartPlace;
+	}
+	else if (min_id == 3)
+	{
+		TriangleMesh the_triangle = Happy.Faces[i_happy];
+		k_reflection = the_triangle.KReflection;
+		k_refraction = the_triangle.KRefraction;
+		color = PhongModel(TheGLLight, TheCamera, the_triangle);
+		reflection = the_ray.GetReflection(Happy, i_happy, t_happy);
+		intersection = reflection.StartPlace;
+	}
+
+	Color color_reflection = RayTracing(reflection, depth + 1);
+	Color result = color + color_reflection * k_reflection;
+	return result;
+}
+
+//光线追踪主函数
+void RayTracingMain()
+{
+	clock_t start, end;
+	start = clock();
+	cout << "计时开始" << endl;
+
+	//求解相机-视点对应的坐标，以及每个像素的位置
+	float dist_x = LengthX / GridX;
+	float dist_y = LengthY / GridY;
+	Point x_axis;
+	Point y_axis;
+	Point z_axis;
+	GetAxis(TheCamera.LookCenter, TheCamera.CurrentPlace, x_axis, y_axis, z_axis);
+	Point half_x = x_axis * (LengthX / 2);
+	Point half_y = y_axis * (LengthY / 2);
+	Point base = TheCamera.CurrentPlace - half_x - half_y;
+
+	//遍历每个像素发光，光线追踪
+	for (int i = 0; i < GridX; i++)
+	{
+		Point dx = x_axis * (dist_x * i);
+		for (int j = 0; j < GridY; j++) 
+		{
+			Point dy = y_axis * (dist_y * j);
+			Point start = base + dx + dy;
+			Ray the_ray;
+			the_ray.Init(start, z_axis, 1);
+			Color the_color = RayTracing(the_ray, 1);
+			Result[i][j] = the_color;
+		}
+	}
+
+	end = clock();
+	cout << "计时结束，一共用时" << double(end - start) / CLOCKS_PER_SEC << "s" << endl;
+}
+
+//光线追踪全局定时器
+void OnTimerRayTrace(int value)
+{
+	glutPostRedisplay();//标记当前窗口需要重新绘制，调用myDisplay()
+	glutTimerFunc(200000, OnTimerRayTrace, 1);
+}
+
+//光线追踪的opengl显示
+void RayTracingDisplay()
+{
+	RayTracingMain();
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//清除颜色缓存
+	glLoadIdentity();
+	gluLookAt(0, 0, 0, 0, 0, 5, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
+	Point base = Point(-LengthX / 2, -LengthY / 2, 5);
+	float dist_x = LengthX / GridX;
+	float dist_y = LengthY / GridY;
+
+	//遍历每个像素发光，光线追踪
+	for (int i = 0; i < GridX; i++)
+	{
+		for (int j = 0; j < GridY; j++)
+		{
+			Point v1 = Point(base.x + i * dist_x, base.y + i * dist_y, base.z);
+			Point v2 = Point(v1.x + dist_x, v1.y, v1.z);
+			Point v3 = Point(v1.x + dist_x, v1.y + dist_y, v1.z);
+			Point v4 = Point(v1.x, v1.y + dist_y, v1.z);
+			Color color = Result[i][j];
+			glColor3f(color.R, color.G, color.B);
+			DrawRectangle(v1, v2, v3, v4);
+		}
+	}
+	glutSwapBuffers();
+}
+
 //选择全局模式
 void ChooseModeGL()
 {
@@ -371,7 +549,6 @@ void ChooseModeGL()
 	}
 }
 
-
 int main(int argc, char**argv)
 {
 	ChooseModeGL();
@@ -391,7 +568,13 @@ int main(int argc, char**argv)
 	}
 	else
 	{
-
+		glutInit(&argc, argv);
+		InitWindow();             //初始化窗口
+		InitScene();              //初始化场景
+		glutReshapeFunc(Reshape); //绑定reshape函数
+		glutDisplayFunc(RayTracingDisplay); //绑定显示函数
+		//glutTimerFunc(20, OnTimerRayTrace, 1);  //启动计时器
+		glutMainLoop();
 	}
 	return 0;
 }

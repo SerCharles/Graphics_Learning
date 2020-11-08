@@ -159,7 +159,6 @@
     <ClInclude Include="Board.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="GLLight.hpp" />
-    <ClInclude Include="main_ray_trace.hpp" />
     <ClInclude Include="MeshModel.hpp" />
     <ClInclude Include="PhongModel.hpp" />
     <ClInclude Include="Point.hpp" />

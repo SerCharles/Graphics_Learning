@@ -27,9 +27,6 @@
     <ClInclude Include="GLLight.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="main_ray_trace.hpp">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="MeshModel.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
