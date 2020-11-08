@@ -15,22 +15,28 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Ray.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="Board.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Camera.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Point.hpp">
+    <ClInclude Include="GLLight.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="GLLight.hpp">
+    <ClInclude Include="main_ray_trace.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MeshModel.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Ray.hpp">
+    <ClInclude Include="PhongModel.hpp">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Point.hpp">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

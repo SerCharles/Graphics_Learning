@@ -6,20 +6,21 @@
 #include "GLLight.hpp"
 #include "Camera.hpp"
 #include "Board.hpp"
-#include "MeshModel.hpp"
 #include "Ray.hpp"
+#include "MeshModel.hpp"
+#include "PhongModel.hpp"
 using namespace std;
 
 #define OPENGL_LIGHT 1
 #define MY_LIGHT 2
-
+#define RAY_TRACE 3
+#define RAY_TRACE_ACCELERATE 4
 
 //全局常量
 const int WindowSizeX = 800, WindowSizeY = 600, WindowPlaceX = 100, WindowPlaceY = 100;
 const char WindowName[] = "MyScene";
 const float TimeOnce = 0.02; //刷新时间
 const float XRange = 10, ZRange = 10, Height = 8, YFloor = 0; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
-const int BallComplexity = 40; //小球绘制精细程度
 int CurrentMode = -1; //模式：模式1是OpenGL光照，模式2是光线追踪
 
 
@@ -48,13 +49,13 @@ void InitWindow()
 }
 
 //初始化OpenGL光照
-void InitGLLight()
+void InitLight()
 {
 	GLfloat background_color[3] = { 0.0, 0.0, 0.0 };
-	GLfloat ambient[3] = { 1, 1, 1};
-	GLfloat diffuse[3] = { 1, 1, 1};
-	GLfloat specular[3] = { 1, 1, 1};
-	GLfloat position[3] = { 0.0f, 10.0f, 0.0f};
+	GLfloat ambient[3] = { 1, 1, 1 };
+	GLfloat diffuse[3] = { 1, 1, 1 };
+	GLfloat specular[3] = { 1, 1, 1 };
+	GLfloat position[3] = { 0.0f, 10.0f, 0.0f };
 	TheGLLight.Init(background_color, ambient, diffuse, specular, position);
 
 	//设置着色模式
@@ -93,9 +94,9 @@ void InitBoards()
 
 	//地板材质
 	GLfloat color_floor[3] = { 1.0, 1.0, 1.0 };
-	GLfloat ambient_floor[3] = { 0.2, 0.2, 0.2};
-	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2};
-	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2};
+	GLfloat ambient_floor[3] = { 0.2, 0.2, 0.2 };
+	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2 };
+	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat shininess_floor = 40;
 	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor);
 }
@@ -159,7 +160,7 @@ void InitMeshs()
 void InitScene()
 {
 
-	InitGLLight();
+	InitLight();
 	InitCamera();
 	InitBoards();
 	InitMeshs();
@@ -173,87 +174,6 @@ void SetCamera()
 	Point camera_place = TheCamera.CurrentPlace;//这就是视点的坐标  
 	Point camera_center = TheCamera.LookCenter;//这是视点中心坐标
 	gluLookAt(camera_place.x, camera_place.y, camera_place.z, camera_center.x, camera_center.y, camera_center.z, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
-}
-
-/*
-描述：计算环境光颜色
-参数：光源环境光参数，面片环境光参数
-*/
-Color GetAmbient(GLfloat ambient_light[], GLfloat ambient_mesh[])
-{
-	Color ambient;
-	ambient.R = ambient_light[0] * ambient_mesh[0];
-	ambient.G = ambient_light[1] * ambient_mesh[1];
-	ambient.B = ambient_light[2] * ambient_mesh[2];
-	return ambient;
-}
-
-/*
-描述：计算漫反射光颜色
-参数：光源漫反射参数，面片漫反射参数，光照的方向（0,1,0），面片法向量
-*/
-Color GetDiffuse(GLfloat diffuse_light[], GLfloat diffuse_mesh[], Point light_vector, Point mesh_norm)
-{
-	float weight = (light_vector * mesh_norm) / light_vector.Dist() / mesh_norm.Dist();
-	Color diffuse;
-	diffuse.R = diffuse_light[0] * diffuse_mesh[0] * weight;
-	diffuse.G = diffuse_light[1] * diffuse_mesh[1] * weight;
-	diffuse.B = diffuse_light[2] * diffuse_mesh[2] * weight;
-	return diffuse;
-}
-
-/*
-描述：计算镜面反射光颜色
-参数：光源镜面反射参数，面片镜面反射参数，光照的方向（0,1,0），视线方向，面片法向量
-*/
-Color GetSpecular(GLfloat specular_light[], GLfloat specular_mesh[], Point light_vector, Point seeing_direction, Point mesh_norm)
-{
-	int n = 10;
-	Point reflection = mesh_norm * 2 * (mesh_norm * light_vector) - light_vector;
-	float weight = reflection * seeing_direction;
-	float original_weight = weight;
-	for (int i = 0; i < n - 1; i++)
-	{
-		weight *= original_weight;
-	}
-
-	Color specular;
-	specular.R = specular_light[0] * specular_mesh[0] * weight;
-	specular.G = specular_light[1] * specular_mesh[1] * weight;
-	specular.B = specular_light[2] * specular_mesh[2] * weight;
-	return specular;
-}
-
-/*
-描述：针对三角面片的phong模型
-参数：当前光源，当前相机，三角面片
-返回：颜色
-*/
-Color PhongModel(GLLight& light, Camera& camera, TriangleMesh& mesh)
-{
-	Point see_direction = camera.LookCenter - camera.CurrentPlace;
-	see_direction = see_direction / see_direction.Dist();
-	Color ambient = GetAmbient(light.Ambient, mesh.Ambient);
-	Color diffuse = GetDiffuse(light.Diffuse, mesh.Diffuse, light.LightVector, mesh.Norm);
-	Color specular = GetSpecular(light.Diffuse, mesh.Diffuse, light.LightVector, see_direction, mesh.Norm);
-	Color phong = ambient + diffuse + specular;
-	return phong;
-}
-
-/*
-描述：针对四边形面片的phong模型
-参数：当前光源，当前相机，三角面片
-返回：颜色
-*/
-Color PhongModel(GLLight& light, Camera& camera, RectangleMesh& mesh)
-{
-	Point see_direction = camera.LookCenter - camera.CurrentPlace;
-	see_direction = see_direction / see_direction.Dist();
-	Color ambient = GetAmbient(light.Ambient, mesh.Ambient);
-	Color diffuse = GetDiffuse(light.Diffuse, mesh.Diffuse, light.LightVector, mesh.Norm);
-	Color specular = GetSpecular(light.Diffuse, mesh.Diffuse, light.LightVector, see_direction, mesh.Norm);
-	Color phong = ambient + diffuse + specular;
-	return phong;
 }
 
 void DrawOneBoard(Board& board)
@@ -339,7 +259,7 @@ void OnTimer(int value)
 
 //交互函数集合
 //处理鼠标点击 
-void OnMouseClick(int button, int state, int x, int y)  
+void OnMouseClick(int button, int state, int x, int y)
 {
 	if (state == GLUT_DOWN)
 	{
@@ -348,7 +268,7 @@ void OnMouseClick(int button, int state, int x, int y)
 }
 
 //处理鼠标拖动  
-void OnMouseMove(int x, int y) 
+void OnMouseMove(int x, int y)
 {
 	TheCamera.MouseMove(x, y);
 }
@@ -399,7 +319,6 @@ void OnSpecialKeyClick(GLint key, GLint x, GLint y)
 	TheCamera.KeyboardMove(type);
 }
 
-
 //reshape函数
 void Reshape(int w, int h)
 {
@@ -411,16 +330,18 @@ void Reshape(int w, int h)
 }
 
 //选择全局模式
-void ChooseMode()
+void ChooseModeGL()
 {
 	while (1)
 	{
 		cout << "请输入要使用的模式" << endl;
 		cout << "1：OpenGL光照模型" << endl;
 		cout << "2：我的phong光照模型" << endl;
+		cout << "3：光线追踪" << endl;
+		cout << "4：加速光线追踪" << endl;
 		int mode;
 		cin >> mode;
-		if (mode == OPENGL_LIGHT || mode == MY_LIGHT)
+		if (mode == OPENGL_LIGHT || mode == MY_LIGHT || mode == RAY_TRACE || mode == RAY_TRACE_ACCELERATE)
 		{
 			CurrentMode = mode;
 			break;
@@ -434,126 +355,43 @@ void ChooseMode()
 	cout << "当前模式为";
 	if (CurrentMode == OPENGL_LIGHT)
 	{
-		cout << "1：OpenGL光照模型" << endl;
+		cout << "OpenGL光照模型" << endl;
 	}
 	else if (CurrentMode == MY_LIGHT)
 	{
-		cout << "2：我的phong光照模型" << endl;
+		cout << "我的phong光照模型" << endl;
+	}
+	else if (CurrentMode == RAY_TRACE)
+	{
+		cout << "光线追踪" << endl;
+	}
+	else if (CurrentMode == RAY_TRACE_ACCELERATE)
+	{
+		cout << "加速光线追踪" << endl;
 	}
 }
-
-//光线追踪相关函数
-/*
-描述：光线追踪主函数
-参数：光线，深度
-返回：得到的颜色
-*/
-Color RayTracing(Ray& the_ray, int depth)
-{
-	if (depth > MaxDepth)
-	{
-		return Color(0.0, 0.0, 0.0);
-	}
-	
-	//和所有物体求交得到最近的t
-	vector<float> t_list;
-	int i_floor = -1;
-	int j_floor = -1;
-	float t_floor = -1;
-	the_ray.GetIntersection(Floor, i_floor, j_floor, t_floor);
-	t_list.push_back(t_floor);
-
-	int i_bunny = -1;
-	float t_bunny = -1;
-	the_ray.GetIntersection(Bunny, i_bunny, t_bunny);
-	t_list.push_back(t_bunny);
-
-	int i_dragon = -1;
-	float t_dragon = -1;
-	the_ray.GetIntersection(Dragon, i_dragon, t_dragon);
-	t_list.push_back(t_dragon);
-
-	int i_happy = -1;
-	float t_happy = -1;
-	the_ray.GetIntersection(Happy, i_happy, t_happy);
-	t_list.push_back(t_happy);
-
-	int min_id = GetSmallestNum(t_list);
-	if(min_id <= 0 || min_id >= 4) 
-	{
-		return Color(0.0, 0.0, 0.0);
-	}
-
-	//求交点，反射光线，颜色
-	Point intersection;
-	Ray reflection;
-	Color color;
-	if (min_id == 0)
-	{
-		//TODO 交点处光强是啥？
-		RectangleMesh the_rectangle = Floor.RectangleList[i_floor][j_floor];
-		color.R = the_rectangle.Color[0];
-		color.G = the_rectangle.Color[1];
-		color.B = the_rectangle.Color[2];
-
-		reflection = the_ray.GetReflection(Floor, i_floor, j_floor, t_floor);
-		intersection = reflection.StartPlace;
-	}
-	else if (min_id == 1)
-	{
-		//TODO 交点处光强是啥？
-		TriangleMesh the_triangle = Bunny.Faces[i_bunny];
-		color.R = the_triangle.Color[0];
-		color.G = the_triangle.Color[1];
-		color.B = the_triangle.Color[2];
-
-		reflection = the_ray.GetReflection(Bunny, i_bunny, t_bunny);
-		intersection = reflection.StartPlace;
-	}
-	else if (min_id == 2)
-	{
-		//TODO 交点处光强是啥？
-		TriangleMesh the_triangle = Dragon.Faces[i_dragon];
-		color.R = the_triangle.Color[0];
-		color.G = the_triangle.Color[1];
-		color.B = the_triangle.Color[2];
-
-		reflection = the_ray.GetReflection(Dragon, i_dragon, t_dragon);
-		intersection = reflection.StartPlace;
-	}
-	else if (min_id == 3)
-	{
-		//TODO 交点处光强是啥？
-		TriangleMesh the_triangle = Happy.Faces[i_happy];
-		color.R = the_triangle.Color[0];
-		color.G = the_triangle.Color[1];
-		color.B = the_triangle.Color[2];
-
-		reflection = the_ray.GetReflection(Happy, i_happy, t_happy);
-		intersection = reflection.StartPlace;
-	}
-
-	Color color_reflection = RayTracing(reflection, depth + 1);
-
-	//TODO:KS
-	Color result = color;
-	return result;
-}
-
 
 
 int main(int argc, char**argv)
 {
-	ChooseMode();
-	glutInit(&argc, argv); 
-	InitWindow();             //初始化窗口
-	InitScene();              //初始化场景
-	glutReshapeFunc(Reshape); //绑定reshape函数
-	glutDisplayFunc(DrawScene); //绑定显示函数
-	glutTimerFunc(20, OnTimer, 1);  //启动计时器
-	glutMouseFunc(OnMouseClick); //绑定鼠标点击函数
-	glutMotionFunc(OnMouseMove); //绑定鼠标移动函数
-	glutKeyboardFunc(OnKeyClick);//绑定键盘点击函数
-	glutSpecialFunc(OnSpecialKeyClick);//绑定特殊键盘点击函数
-	glutMainLoop();
+	ChooseModeGL();
+	if (CurrentMode == MY_LIGHT || CurrentMode == OPENGL_LIGHT)
+	{
+		glutInit(&argc, argv);
+		InitWindow();             //初始化窗口
+		InitScene();              //初始化场景
+		glutReshapeFunc(Reshape); //绑定reshape函数
+		glutDisplayFunc(DrawScene); //绑定显示函数
+		glutTimerFunc(20, OnTimer, 1);  //启动计时器
+		glutMouseFunc(OnMouseClick); //绑定鼠标点击函数
+		glutMotionFunc(OnMouseMove); //绑定鼠标移动函数
+		glutKeyboardFunc(OnKeyClick);//绑定键盘点击函数
+		glutSpecialFunc(OnSpecialKeyClick);//绑定特殊键盘点击函数
+		glutMainLoop();
+	}
+	else
+	{
+
+	}
+	return 0;
 }
