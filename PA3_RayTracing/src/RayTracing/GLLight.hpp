@@ -4,7 +4,7 @@
 */
 #pragma once
 #include<GL/glut.h>
-
+#include"Point.hpp"
 class GLLight
 {
 public:
@@ -12,8 +12,8 @@ public:
 	GLfloat Ambient[4] = { 0, 0, 0, 0 }; //环境光
 	GLfloat Diffuse[4] = { 0, 0, 0, 0 }; //漫反射
 	GLfloat Specular[4] = { 0, 0, 0, 0 }; //镜面反射
-	GLfloat Position[4] = { 0, 0, 0, 0 }; //镜面指数
-
+	GLfloat Position[4] = { 0, 0, 0, 0 }; //位置
+	Point LightVector;
 	GLLight() {}
 
 	//初始化
@@ -35,5 +35,8 @@ public:
 
 		//无限远处平行光
 		Position[3] = 1.0; 
+		LightVector = Point(0, 1, 0);
 	}
+
+
 };

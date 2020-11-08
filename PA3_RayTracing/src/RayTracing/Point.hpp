@@ -129,6 +129,39 @@ public:
 		G = g;
 		B = b;
 	}
+	Color operator+(const Color& b)
+	{
+		Color c;
+		c.R = R + b.R;
+		c.G = G + b.G;
+		c.B = B + b.B;
+		return c;
+	}
+	Color operator-(const Color& b)
+	{
+		Color c;
+		c.R = R - b.R;
+		c.G = G - b.G;
+		c.B = B - b.B;
+		return c;
+	}
+	Color operator*(const float& b)
+	{
+		Color c;
+		c.R = R * b;
+		c.G = G * b;
+		c.B = B * b;
+		return c;
+	}
+
+	Color operator/(const float& b)
+	{
+		Color c;
+		c.R = R / b;
+		c.G = G / b;
+		c.B = B / b;
+		return c;
+	}
 };
 
 /*

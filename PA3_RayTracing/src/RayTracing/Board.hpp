@@ -14,6 +14,7 @@ public:
 	//位置信息
 	float SizeX = 0, SizeZ = 0;
 	Point PointList[4];
+	Point Norm;
 	//材质，纹理，颜色信息
 	GLfloat Color[3] = { 0, 0, 0 }; //颜色
 	GLfloat Ambient[4] = { 0, 0, 0, 0 }; //环境光
@@ -27,6 +28,7 @@ public:
 		PointList[1].SetPlace(start_x + size_x, y, start_z);
 		PointList[2].SetPlace(start_x + size_x, y, start_z + size_z);
 		PointList[3].SetPlace(start_x, y, start_z + size_z);
+		Norm = Point(0, 1, 0);
 	}
 
 	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess)
@@ -109,26 +111,6 @@ public:
 		}
 	}
 
-
-
-	//绘制自身
-	void Draw()
-	{
-		for (int i = 0; i < XNum; i++)
-		{
-			for (int j = 0; j < ZNum; j++)
-			{
-				RectangleMesh mesh = RectangleList[i][j];
-				glColor3f(mesh.Color[0], mesh.Color[1], mesh.Color[2]);
-				glMaterialfv(GL_FRONT, GL_AMBIENT, mesh.Ambient);
-				glMaterialfv(GL_FRONT, GL_DIFFUSE, mesh.Diffuse);
-				glMaterialfv(GL_FRONT, GL_SPECULAR, mesh.Specular);
-				glMaterialfv(GL_FRONT, GL_SHININESS, mesh.Shininess);
-				DrawRectangle(mesh.PointList[0], mesh.PointList[1], mesh.PointList[2], mesh.PointList[3]);
-			}
-		}
-		glFlush();
-	}
 
 	/*
 	描述：获取交点所在的网格坐标

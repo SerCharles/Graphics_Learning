@@ -276,19 +276,4 @@ public:
 		}
 	}
 
-	//»æÖÆ×ÔÉí
-	void Draw()
-	{
-		for (int i = 0; i < FaceNum; i++)
-		{
-			TriangleMesh the_face = Faces[i];
-			glColor3f(the_face.Color[0], the_face.Color[1], the_face.Color[2]);
-			glMaterialfv(GL_FRONT, GL_AMBIENT, the_face.Ambient);
-			glMaterialfv(GL_FRONT, GL_DIFFUSE, the_face.Diffuse);
-			glMaterialfv(GL_FRONT, GL_SPECULAR, the_face.Specular);
-			glMaterialfv(GL_FRONT, GL_SHININESS, the_face.Shininess);
-			DrawTriangle(the_face.v1, the_face.v2, the_face.v3);
-		}
-		glFlush();
-	}
 };

@@ -11,8 +11,7 @@
 using namespace std;
 
 #define OPENGL_LIGHT 1
-#define RAY_TRACE 2
-#define RAY_TRACE_ACCELERATE 3
+#define MY_LIGHT 2
 
 
 //全局常量
@@ -64,14 +63,17 @@ void InitGLLight()
 	glClearColor(TheGLLight.Color[0], TheGLLight.Color[1], TheGLLight.Color[2], TheGLLight.Color[3]);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	//设置光源信息
-	glLightfv(GL_LIGHT0, GL_AMBIENT, TheGLLight.Ambient);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, TheGLLight.Diffuse);
-	glLightfv(GL_LIGHT0, GL_SPECULAR, TheGLLight.Specular);
-	glLightfv(GL_LIGHT0, GL_POSITION, TheGLLight.Position);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	
+	if (CurrentMode == OPENGL_LIGHT)
+	{
+		//设置光源信息
+		glLightfv(GL_LIGHT0, GL_AMBIENT, TheGLLight.Ambient);
+		glLightfv(GL_LIGHT0, GL_DIFFUSE, TheGLLight.Diffuse);
+		glLightfv(GL_LIGHT0, GL_SPECULAR, TheGLLight.Specular);
+		glLightfv(GL_LIGHT0, GL_POSITION, TheGLLight.Position);
+		glEnable(GL_LIGHTING);
+		glEnable(GL_LIGHT0);
+	}
+
 	//设置深度检测，即只绘制最前面的一层
 	glEnable(GL_DEPTH_TEST);
 }
@@ -112,7 +114,7 @@ void InitMeshs()
 		GLfloat ambient[3] = { 0.2, 0.2, 0.6 };
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-		GLfloat shininess = 20;
+		GLfloat shininess = 100;
 
 		Bunny.InitPlace("bunny.ply", size, center);
 		Bunny.InitColor(color, ambient, diffuse, specular, shininess);
@@ -129,7 +131,7 @@ void InitMeshs()
 		GLfloat ambient[3] = { 0.6, 0.2, 0.2 };
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-		GLfloat shininess = 50;
+		GLfloat shininess = 100;
 
 		Dragon.InitPlace("dragon.ply", size, center);
 		Dragon.InitColor(color, ambient, diffuse, specular, shininess);
@@ -146,7 +148,7 @@ void InitMeshs()
 		GLfloat ambient[3] = { 0.6, 0.6, 0.2 };
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
-		GLfloat shininess = 80;
+		GLfloat shininess = 100;
 
 		Happy.InitPlace("happy.ply", size, center);
 		Happy.InitColor(color, ambient, diffuse, specular, shininess);
@@ -156,10 +158,8 @@ void InitMeshs()
 //初始化的主函数
 void InitScene()
 {
-	if (CurrentMode == OPENGL_LIGHT)
-	{
-		InitGLLight();
-	}
+
+	InitGLLight();
 	InitCamera();
 	InitBoards();
 	InitMeshs();
@@ -175,20 +175,148 @@ void SetCamera()
 	gluLookAt(camera_place.x, camera_place.y, camera_place.z, camera_center.x, camera_center.y, camera_center.z, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
 }
 
+/*
+描述：计算环境光颜色
+参数：光源环境光参数，面片环境光参数
+*/
+Color GetAmbient(GLfloat ambient_light[], GLfloat ambient_mesh[])
+{
+	Color ambient;
+	ambient.R = ambient_light[0] * ambient_mesh[0];
+	ambient.G = ambient_light[1] * ambient_mesh[1];
+	ambient.B = ambient_light[2] * ambient_mesh[2];
+	return ambient;
+}
+
+/*
+描述：计算漫反射光颜色
+参数：光源漫反射参数，面片漫反射参数，光照的方向（0,1,0），面片法向量
+*/
+Color GetDiffuse(GLfloat diffuse_light[], GLfloat diffuse_mesh[], Point light_vector, Point mesh_norm)
+{
+	float weight = (light_vector * mesh_norm) / light_vector.Dist() / mesh_norm.Dist();
+	Color diffuse;
+	diffuse.R = diffuse_light[0] * diffuse_mesh[0] * weight;
+	diffuse.G = diffuse_light[1] * diffuse_mesh[1] * weight;
+	diffuse.B = diffuse_light[2] * diffuse_mesh[2] * weight;
+	return diffuse;
+}
+
+/*
+描述：计算镜面反射光颜色
+参数：光源镜面反射参数，面片镜面反射参数，光照的方向（0,1,0），视线方向，面片法向量
+*/
+Color GetSpecular(GLfloat specular_light[], GLfloat specular_mesh[], Point light_vector, Point seeing_direction, Point mesh_norm)
+{
+	int n = 10;
+	Point reflection = mesh_norm * 2 * (mesh_norm * light_vector) - light_vector;
+	float weight = reflection * seeing_direction;
+	float original_weight = weight;
+	for (int i = 0; i < n - 1; i++)
+	{
+		weight *= original_weight;
+	}
+
+	Color specular;
+	specular.R = specular_light[0] * specular_mesh[0] * weight;
+	specular.G = specular_light[1] * specular_mesh[1] * weight;
+	specular.B = specular_light[2] * specular_mesh[2] * weight;
+	return specular;
+}
+
+/*
+描述：针对三角面片的phong模型
+参数：当前光源，当前相机，三角面片
+返回：颜色
+*/
+Color PhongModel(GLLight& light, Camera& camera, TriangleMesh& mesh)
+{
+	Point see_direction = camera.LookCenter - camera.CurrentPlace;
+	see_direction = see_direction / see_direction.Dist();
+	Color ambient = GetAmbient(light.Ambient, mesh.Ambient);
+	Color diffuse = GetDiffuse(light.Diffuse, mesh.Diffuse, light.LightVector, mesh.Norm);
+	Color specular = GetSpecular(light.Diffuse, mesh.Diffuse, light.LightVector, see_direction, mesh.Norm);
+	Color phong = ambient + diffuse + specular;
+	return phong;
+}
+
+/*
+描述：针对四边形面片的phong模型
+参数：当前光源，当前相机，三角面片
+返回：颜色
+*/
+Color PhongModel(GLLight& light, Camera& camera, RectangleMesh& mesh)
+{
+	Point see_direction = camera.LookCenter - camera.CurrentPlace;
+	see_direction = see_direction / see_direction.Dist();
+	Color ambient = GetAmbient(light.Ambient, mesh.Ambient);
+	Color diffuse = GetDiffuse(light.Diffuse, mesh.Diffuse, light.LightVector, mesh.Norm);
+	Color specular = GetSpecular(light.Diffuse, mesh.Diffuse, light.LightVector, see_direction, mesh.Norm);
+	Color phong = ambient + diffuse + specular;
+	return phong;
+}
+
+void DrawOneBoard(Board& board)
+{
+	for (int i = 0; i < board.XNum; i++)
+	{
+		for (int j = 0; j < board.ZNum; j++)
+		{
+			RectangleMesh mesh = board.RectangleList[i][j];
+			if (CurrentMode == OPENGL_LIGHT)
+			{
+				glColor3f(mesh.Color[0], mesh.Color[1], mesh.Color[2]);
+				glMaterialfv(GL_FRONT, GL_AMBIENT, mesh.Ambient);
+				glMaterialfv(GL_FRONT, GL_DIFFUSE, mesh.Diffuse);
+				glMaterialfv(GL_FRONT, GL_SPECULAR, mesh.Specular);
+				glMaterialfv(GL_FRONT, GL_SHININESS, mesh.Shininess);
+			}
+			else
+			{
+				Color phong = PhongModel(TheGLLight, TheCamera, mesh);
+				glColor3f(phong.R, phong.G, phong.B);
+			}
+			DrawRectangle(mesh.PointList[0], mesh.PointList[1], mesh.PointList[2], mesh.PointList[3]);
+		}
+	}
+	glFlush();
+}
+
 //绘制边界
 void DrawBoards()
 {
-	Floor.Draw();
+	DrawOneBoard(Floor);
 }
 
+void DrawOneMesh(MeshModel& model)
+{
+	for (int i = 0; i < model.FaceNum; i++)
+	{
+		TriangleMesh the_face = model.Faces[i];
+		if (CurrentMode == OPENGL_LIGHT)
+		{
+			glColor3f(the_face.Color[0], the_face.Color[1], the_face.Color[2]);
+			glMaterialfv(GL_FRONT, GL_AMBIENT, the_face.Ambient);
+			glMaterialfv(GL_FRONT, GL_DIFFUSE, the_face.Diffuse);
+			glMaterialfv(GL_FRONT, GL_SPECULAR, the_face.Specular);
+			glMaterialfv(GL_FRONT, GL_SHININESS, the_face.Shininess);
+		}
+		else if (CurrentMode == MY_LIGHT)
+		{
+			Color phong = PhongModel(TheGLLight, TheCamera, the_face);
+			glColor3f(phong.R, phong.G, phong.B);
+		}
+		DrawTriangle(the_face.v1, the_face.v2, the_face.v3);
+	}
+	glFlush();
+}
 
 //绘制mesh
 void DrawMeshs()
 {
-	Bunny.Draw();
-	Dragon.Draw();
-	Happy.Draw();
-
+	DrawOneMesh(Bunny);
+	DrawOneMesh(Dragon);
+	DrawOneMesh(Happy);
 }
 
 //绘制的主函数
@@ -289,11 +417,10 @@ void ChooseMode()
 	{
 		cout << "请输入要使用的模式" << endl;
 		cout << "1：OpenGL光照模型" << endl;
-		cout << "2：光线追踪基本模型" << endl;
-		cout << "3：光线追踪加速模型" << endl;
+		cout << "2：我的phong光照模型" << endl;
 		int mode;
 		cin >> mode;
-		if (mode == OPENGL_LIGHT || mode == RAY_TRACE || mode == RAY_TRACE_ACCELERATE)
+		if (mode == OPENGL_LIGHT || mode == MY_LIGHT)
 		{
 			CurrentMode = mode;
 			break;
@@ -309,20 +436,13 @@ void ChooseMode()
 	{
 		cout << "1：OpenGL光照模型" << endl;
 	}
-	else if (CurrentMode == RAY_TRACE)
+	else if (CurrentMode == MY_LIGHT)
 	{
-		cout << "2：光线追踪基本模型" << endl;
-	}
-	else if (CurrentMode == RAY_TRACE_ACCELERATE)
-	{
-		cout << "3：光线追踪加速模型" << endl;
+		cout << "2：我的phong光照模型" << endl;
 	}
 }
 
 //光线追踪相关函数
-
-
-
 /*
 描述：光线追踪主函数
 参数：光线，深度
@@ -414,7 +534,9 @@ Color RayTracing(Ray& the_ray, int depth)
 	}
 
 	Color color_reflection = RayTracing(reflection, depth + 1);
-	Color result = color + color_reflection * ks;
+
+	//TODO:KS
+	Color result = color;
 	return result;
 }
 
