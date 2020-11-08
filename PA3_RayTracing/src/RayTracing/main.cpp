@@ -340,8 +340,8 @@ void Reshape(int w, int h)
 
 
 //光线追踪相关函数
-const int GridX = 50;
-const int GridY = 50;
+const int GridX = 100;
+const int GridY = 100;
 const float LengthX = 10;
 const float LengthY = 10;
 Color Result[GridX][GridY];
@@ -359,6 +359,7 @@ Color RayTracing(Ray& the_ray, int depth)
 
 	//和所有物体求交得到最近的t
 	vector<float> t_list;
+	t_list.clear();
 	int i_floor = -1;
 	int j_floor = -1;
 	float t_floor = -1;
@@ -381,7 +382,7 @@ Color RayTracing(Ray& the_ray, int depth)
 	t_list.push_back(t_happy);
 
 	int min_id = GetSmallestNum(t_list);
-	if (min_id <= 0 || min_id >= 4)
+	if (min_id < 0 || min_id >= 4)
 	{
 		return Color(0.0, 0.0, 0.0);
 	}
@@ -472,18 +473,13 @@ void RayTracingMain()
 	cout << "计时结束，一共用时" << double(end - start) / CLOCKS_PER_SEC << "s" << endl;
 }
 
-//光线追踪全局定时器
-void OnTimerRayTrace(int value)
-{
-	glutPostRedisplay();//标记当前窗口需要重新绘制，调用myDisplay()
-	glutTimerFunc(200000, OnTimerRayTrace, 1);
-}
-
 //光线追踪的opengl显示
 void RayTracingDisplay()
 {
-	RayTracingMain();
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	//清除颜色缓存
+	glShadeModel(GL_SMOOTH);
+	glClearColor(TheGLLight.Color[0], TheGLLight.Color[1], TheGLLight.Color[2], TheGLLight.Color[3]);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
 	gluLookAt(0, 0, 0, 0, 0, 5, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
 	Point base = Point(-LengthX / 2, -LengthY / 2, 5);
@@ -495,7 +491,7 @@ void RayTracingDisplay()
 	{
 		for (int j = 0; j < GridY; j++)
 		{
-			Point v1 = Point(base.x + i * dist_x, base.y + i * dist_y, base.z);
+			Point v1 = Point(base.x + i * dist_x, base.y + j * dist_y, base.z);
 			Point v2 = Point(v1.x + dist_x, v1.y, v1.z);
 			Point v3 = Point(v1.x + dist_x, v1.y + dist_y, v1.z);
 			Point v4 = Point(v1.x, v1.y + dist_y, v1.z);
@@ -571,9 +567,10 @@ int main(int argc, char**argv)
 		glutInit(&argc, argv);
 		InitWindow();             //初始化窗口
 		InitScene();              //初始化场景
+		RayTracingMain();
 		glutReshapeFunc(Reshape); //绑定reshape函数
+		glutTimerFunc(20, OnTimer, 1);  //启动计时器
 		glutDisplayFunc(RayTracingDisplay); //绑定显示函数
-		//glutTimerFunc(20, OnTimerRayTrace, 1);  //启动计时器
 		glutMainLoop();
 	}
 	return 0;
