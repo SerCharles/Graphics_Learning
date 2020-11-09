@@ -225,20 +225,3 @@ int GetSmallestNum(vector<float> list)
 	return min_id;
 }
 
-/*
-描述：给定视点和当前相机位置，获得新的x，y，z（就是相机看视点）轴
-参数：视点，相机位置
-返回：新的x，y，z轴
-*/
-void GetAxis(Point look_center, Point camera_place, Point& xx, Point& yy, Point& zz)
-{
-	zz = look_center - camera_place;
-	float a = zz.x;
-	float b = zz.y;
-	float c = zz.z;
-	xx = Point(c, 0, -a);
-	yy = Point(a, -a * a - c * c, c);
-	xx.Normalize();
-	yy.Normalize();
-	zz.Normalize();
-}
