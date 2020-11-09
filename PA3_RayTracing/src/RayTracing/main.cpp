@@ -340,8 +340,8 @@ void Reshape(int w, int h)
 
 
 //光线追踪相关函数
-const int GridX = 200;
-const int GridY = 200;
+const int GridX = 500;
+const int GridY = 500;
 const float LengthX = 20;
 const float LengthY = 20;
 const int MaxDepth = 3;
@@ -364,26 +364,48 @@ Color RayTracing(Ray& the_ray, int depth)
 	int i_floor = -1;
 	int j_floor = -1;
 	float t_floor = -1;
+
 	the_ray.GetIntersection(Floor, i_floor, j_floor, t_floor);
 	t_list.push_back(t_floor);
 
 	int i_bunny = -1;
 	float t_bunny = -1;
-	the_ray.GetIntersection(Bunny, i_bunny, t_bunny);
+	if (CurrentMode == RAY_TRACE)
+	{
+		the_ray.GetIntersection(Bunny, i_bunny, t_bunny);
+	}
+	else if (CurrentMode == RAY_TRACE_ACCELERATE)
+	{
+		the_ray.GetIntersectionFast(Bunny, i_bunny, t_bunny);
+	}
 	t_list.push_back(t_bunny);
 	
 	int i_dragon = -1;
 	float t_dragon = -1;
-	the_ray.GetIntersection(Dragon, i_dragon, t_dragon);
+	if (CurrentMode == RAY_TRACE)
+	{
+		the_ray.GetIntersection(Dragon, i_dragon, t_dragon);
+	}
+	else if (CurrentMode == RAY_TRACE_ACCELERATE)
+	{
+		the_ray.GetIntersectionFast(Dragon, i_dragon, t_dragon);
+	}
 	t_list.push_back(t_dragon);
 
 	int i_happy = -1;
 	float t_happy = -1;
-	the_ray.GetIntersection(Happy, i_happy, t_happy);
+	if (CurrentMode == RAY_TRACE)
+	{
+		the_ray.GetIntersection(Happy, i_happy, t_happy);
+	}
+	else if (CurrentMode == RAY_TRACE_ACCELERATE)
+	{
+		the_ray.GetIntersectionFast(Happy, i_happy, t_happy);
+	}
 	t_list.push_back(t_happy);
 	
 	int min_id = GetSmallestNum(t_list);
-	if (min_id < 0 || min_id >= 4)
+	if (min_id < 0)
 	{
 		return Color(0.0, 0.0, 0.0);
 	}

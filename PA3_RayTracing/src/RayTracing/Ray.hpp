@@ -155,6 +155,152 @@ public:
 	}
 
 	/*
+	描述：和包围盒求交
+	参数：包围盒
+	返回：交点最小的t，不存在返回-1
+	*/
+	float GetIntersection(BoundingBox* m)
+	{
+		
+		float t_x_down = -1, t_x_up = -1, t_y_down = -1, t_y_up = -1, t_z_down = -1, t_z_up = -1;
+		if (Direction.x != 0)
+		{
+			t_x_down = (m->PointDown.x - StartPlace.x) / Direction.x;
+			t_x_up = (m->PointUp.x - StartPlace.x) / Direction.x;
+			Point p_x_down = StartPlace + Direction * t_x_down;
+			Point p_x_up = StartPlace + Direction * t_x_up;
+			if (t_x_down <= 0 ||
+				JudgePointInsideRectangle(p_x_down.y, p_x_down.z,
+					m->PointDown.y, m->PointDown.z, m->PointUp.y, m->PointUp.z) == 0)
+			{
+				t_x_down = -1;
+			}
+			if (t_x_up <= 0 ||
+				JudgePointInsideRectangle(p_x_up.y, p_x_up.z,
+					m->PointDown.y, m->PointDown.z, m->PointUp.y, m->PointUp.z) == 0)
+			{
+				t_x_up = -1;
+			}
+
+		}
+		if (Direction.y != 0)
+		{
+			t_y_down = (m->PointDown.y - StartPlace.y) / Direction.y;
+			t_y_up = (m->PointUp.y - StartPlace.y) / Direction.y;
+			Point p_y_down = StartPlace + Direction * t_y_down;
+			Point p_y_up = StartPlace + Direction * t_y_up;
+			if (t_y_down <= 0 ||
+				JudgePointInsideRectangle(p_y_down.x, p_y_down.z,
+					m->PointDown.x, m->PointDown.z, m->PointUp.x, m->PointUp.z) == 0)
+			{
+				t_y_down = -1;
+			}
+			if (t_y_up <= 0 ||
+				JudgePointInsideRectangle(p_y_up.x, p_y_up.z,
+					m->PointDown.x, m->PointDown.z, m->PointUp.x, m->PointUp.z) == 0)
+			{
+				t_y_up = -1;
+			}
+		}
+		if (Direction.z != 0)
+		{
+			t_z_down = (m->PointDown.z - StartPlace.z) / Direction.z;
+			t_z_up = (m->PointUp.z - StartPlace.z) / Direction.z;
+			Point p_z_down = StartPlace + Direction * t_z_down;
+			Point p_z_up = StartPlace + Direction * t_z_up;
+			if (t_z_down <= 0 ||
+				JudgePointInsideRectangle(p_z_down.x, p_z_down.y,
+					m->PointDown.x, m->PointDown.y, m->PointUp.x, m->PointUp.y) == 0)
+			{
+				t_z_down = -1;
+			}
+			if (t_z_up <= 0 ||
+				JudgePointInsideRectangle(p_z_up.x, p_z_up.y,
+					m->PointDown.x, m->PointDown.y, m->PointUp.x, m->PointUp.y) == 0)
+			{
+				t_z_up = -1;
+			}
+		}
+		vector<float> t_list;
+		t_list.clear();
+		t_list.push_back(t_x_down);
+		t_list.push_back(t_x_up);
+		t_list.push_back(t_y_down);
+		t_list.push_back(t_y_up);
+		t_list.push_back(t_z_down);
+		t_list.push_back(t_z_up);
+		int min_id = GetSmallestNum(t_list);
+		if (min_id < 0)
+		{
+			return -1;
+		}
+		return t_list[min_id];
+	}
+
+	/*
+	描述：递归找包围盒里需要比较的面片
+	参数：包围盒指针
+	返回：在vector里添加面片和id
+	*/
+	void GetPossibleMeshRecursive(vector<TriangleMesh>& mesh_list, vector<int>& mesh_id_list, BoundingBox* m)
+	{
+		if (m == NULL) return;
+		float t = GetIntersection(m);
+		if (t <= 0) return;
+		if (m->Sons[0] != NULL)
+		{
+			for (int i = 0; i < 8; i++)
+			{
+				GetPossibleMeshRecursive(mesh_list, mesh_id_list, m->Sons[i]);
+			}
+		}
+		else
+		{
+			for (int i = 0; i < m->MeshList.size(); i++)
+			{
+				mesh_list.push_back(m->MeshList[i]);
+				mesh_id_list.push_back(m->MeshID[i]);
+			}
+		}
+	}
+
+	/*
+	描述：和面片模型求交（加速了）
+	参数：面片模型
+	返回：交点对应的面片id i，交点的t值，不存在返回-1
+	*/
+	void GetIntersectionFast(MeshModel&m, int&i, float& t)
+	{
+		float min_t = 14530529;
+		float min_id = -1;
+		
+		vector<TriangleMesh> mesh_list;
+		vector<int> mesh_id_list;
+		mesh_list.clear();
+		mesh_id_list.clear();
+		GetPossibleMeshRecursive(mesh_list, mesh_id_list, m.TheBoundingBox);
+		for (int i = 0; i < mesh_list.size(); i++)
+		{
+			float t = -1;
+			GetIntersection(mesh_list[i], t);
+			if (t > 0 && t < min_t)
+			{
+				min_t = t;
+				min_id = mesh_id_list[i];
+			}
+		}
+
+		if (min_id < 0)
+		{
+			i = -1;
+			t = -1;
+			return;
+		}
+		i = min_id;
+		t = min_t;
+	}
+
+	/*
 	描述：和三角面片模型求交生成反射光线
 	参数：三角面片模型，交点对应的面片id i，交点的t值
 	返回：新的光线

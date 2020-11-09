@@ -115,9 +115,11 @@ public:
 	Point PointUp;
 
 	vector<TriangleMesh> MeshList;
+	vector<int> MeshID;
 	BoundingBox(Point point_down, Point point_up, int depth)
 	{
 		MeshList.clear();
+		MeshID.clear();
 		PointDown = point_down;
 		PointUp = point_up;
 		Depth = depth;
@@ -133,6 +135,7 @@ public:
 		for (int i = 0; i < list.size(); i++)
 		{
 			MeshList.push_back(list[i]);
+			MeshID.push_back(i);
 		}
 	}
 
@@ -177,6 +180,7 @@ public:
 				if (JudgeMeshInsideBox(MeshList[j], Sons[i]->PointDown, Sons[i]->PointUp))
 				{
 					Sons[i]->MeshList.push_back(MeshList[j]);
+					Sons[i]->MeshID.push_back(MeshID[j]);
 				}
 			}
 		}
