@@ -7,8 +7,10 @@
 *.userosscache
 *.sln.docstates
 
-Cliping/bin
-Scene/bin
+PA1_Cliping/bin
+PA2_Scene/bin
+PA3_RayTracing/src/enc_temp_folder
+PA3_RayTracing/bin
 *.mp4
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
