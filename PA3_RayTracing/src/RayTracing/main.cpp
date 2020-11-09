@@ -31,9 +31,7 @@ GLLight TheGLLight;
 //物体
 Board Floor; //边界
 //面片物体
-MeshModel Bunny;
-MeshModel Dragon;
-MeshModel Happy;
+MeshModel Bunny, Dragon, Happy;
 
 
 //初始化函数集合
@@ -100,7 +98,7 @@ void InitBoards()
 	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat shininess_floor = 40;
-	float k_reflection = 0.2;
+	float k_reflection = 1;
 	float k_refraction = 0;
 	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor, k_reflection, k_refraction);
 }
@@ -120,14 +118,13 @@ void InitMeshs()
 		GLfloat diffuse[3] = { 0.4, 0.4, 0.4 };
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
-		float k_reflection = 0.4;
-		float k_refraction = 0.2;
+		float k_reflection = 0.6;
+		float k_refraction = 0.4;
 
 		Bunny.InitPlace("bunny.ply", size, center);
 		Bunny.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
 	}
 
-	
 	//龙
 	{
 		//面片的大小，位置
@@ -165,7 +162,6 @@ void InitMeshs()
 		Happy.InitPlace("happy.ply", size, center);
 		Happy.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
 	}
-	
 }
 
 //初始化的主函数
@@ -344,11 +340,10 @@ void Reshape(int w, int h)
 
 
 //光线追踪相关函数
-const int GridX = 200;
-const int GridY = 200;
-const float LengthX = 20;
-const float LengthY = 20;
-const int MaxDepth = 2;
+const int GridX = 100;
+const int GridY = 100;
+const float LengthX = 10;
+const float LengthY = 10;
 Color Result[GridX][GridY];
 /*
 描述：光线追踪主函数
@@ -376,7 +371,6 @@ Color RayTracing(Ray& the_ray, int depth)
 	the_ray.GetIntersection(Bunny, i_bunny, t_bunny);
 	t_list.push_back(t_bunny);
 
-	
 	int i_dragon = -1;
 	float t_dragon = -1;
 	the_ray.GetIntersection(Dragon, i_dragon, t_dragon);
@@ -386,7 +380,6 @@ Color RayTracing(Ray& the_ray, int depth)
 	float t_happy = -1;
 	the_ray.GetIntersection(Happy, i_happy, t_happy);
 	t_list.push_back(t_happy);
-	
 
 	int min_id = GetSmallestNum(t_list);
 	if (min_id < 0 || min_id >= 4)
@@ -419,7 +412,6 @@ Color RayTracing(Ray& the_ray, int depth)
 		reflection = the_ray.GetReflection(Bunny, i_bunny, t_bunny);
 		intersection = reflection.StartPlace;
 	}
-	
 	else if (min_id == 2)
 	{
 		TriangleMesh the_triangle = Dragon.Faces[i_dragon];
@@ -438,7 +430,6 @@ Color RayTracing(Ray& the_ray, int depth)
 		reflection = the_ray.GetReflection(Happy, i_happy, t_happy);
 		intersection = reflection.StartPlace;
 	}
-	
 
 	Color color_reflection = RayTracing(reflection, depth + 1);
 	Color result = color + color_reflection * k_reflection;
@@ -448,7 +439,6 @@ Color RayTracing(Ray& the_ray, int depth)
 //光线追踪主函数
 void RayTracingMain()
 {
-
 	clock_t start, end;
 	start = clock();
 	cout << "计时开始" << endl;
@@ -459,15 +449,7 @@ void RayTracingMain()
 	Point x_axis;
 	Point y_axis;
 	Point z_axis;
-	TheCamera.CurrentPlace.SetPlace(10, 10, 0);
-	TheCamera.LookCenter.SetPlace(0, 0, 0);
-	x_axis.SetPlace(1, -1, sqrt(2));
-	y_axis.SetPlace(-1, 1, sqrt(2));
-	z_axis.SetPlace(-1, -1, 0);
-	x_axis.Normalize();
-	y_axis.Normalize();
-	z_axis.Normalize();
-	//GetAxis(TheCamera.LookCenter, TheCamera.CurrentPlace, x_axis, y_axis, z_axis);
+	GetAxis(TheCamera.LookCenter, TheCamera.CurrentPlace, x_axis, y_axis, z_axis);
 	Point half_x = x_axis * (LengthX / 2);
 	Point half_y = y_axis * (LengthY / 2);
 	Point base = TheCamera.CurrentPlace - half_x - half_y;
@@ -499,8 +481,8 @@ void RayTracingDisplay()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_DEPTH_TEST);
 	glLoadIdentity();
-	gluLookAt(0, 0, 0, 0, 0, 18, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
-	Point base = Point(-LengthX / 2, -LengthY / 2, 18);
+	gluLookAt(0, 0, 0, 0, 0, 5, 0, 1, 0); //从视点看远点,y轴方向(0,1,0)是上方向  
+	Point base = Point(-LengthX / 2, -LengthY / 2, 5);
 	float dist_x = LengthX / GridX;
 	float dist_y = LengthY / GridY;
 

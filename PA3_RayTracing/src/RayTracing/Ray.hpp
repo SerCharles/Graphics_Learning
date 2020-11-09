@@ -9,7 +9,7 @@
 #include"Board.hpp"
 #include"MeshModel.hpp"
 
-
+const int MaxDepth = 3;
 
 
 class Ray
