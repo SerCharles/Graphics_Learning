@@ -30,6 +30,7 @@ public:
 	GLfloat Shininess[4] = { 0 }; //镜面指数
 	float KReflection = 0.0;
 	float KRefraction = 0.0;
+	float RefractionRate = 0.0;
 
 	TriangleMesh(){}
 	
@@ -54,7 +55,7 @@ public:
 	}
 
 	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess,
-		float k_reflection, float k_refraction)
+		float k_reflection, float k_refraction, float refraction_rate)
 	{
 		for (int i = 0; i < 3; i++)
 		{
@@ -70,6 +71,7 @@ public:
 		Shininess[0] = shininess;
 		KReflection = k_reflection;
 		KRefraction = k_refraction;
+		RefractionRate = refraction_rate;
 	}
 };
 
@@ -227,10 +229,11 @@ public:
 	GLfloat Shininess[4] = { 0 }; //镜面指数
 	float KReflection = 0.0;
 	float KRefraction = 0.0;
+	float RefractionRate = 0.0;
 	
 	//初始化颜色，纹理，材质信息
 	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess,
-		float k_reflection, float k_refraction)
+		float k_reflection, float k_refraction, float refraction_rate)
 	{
 		for (int i = 0; i < 3; i++)
 		{
@@ -246,9 +249,10 @@ public:
 		Shininess[0] = shininess;
 		KReflection = k_reflection;
 		KRefraction = k_refraction;
+		RefractionRate = refraction_rate;
 		for (int i = 0; i < FaceNum; i++)
 		{
-			Faces[i].InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
+			Faces[i].InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction, refraction_rate);
 		}
 	}
 

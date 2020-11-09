@@ -18,14 +18,16 @@ public:
 	Point StartPlace;
 	Point Direction;
 	float Intensity;
+	float RefractionRate;
 
 	Ray(){}
 
-	void Init(Point start, Point direction, float intensity)
+	void Init(Point start, Point direction, float intensity, float refraction)
 	{
 		StartPlace = start;
 		Direction = direction;
 		Intensity = intensity;
+		RefractionRate = refraction;
 	}
 
 	/*
@@ -77,11 +79,25 @@ public:
 		intersection_point.y = b.Y;
 		Point new_direction = Point(Direction.x, -Direction.y, Direction.z);
 
-		//TODO：强度
-		float new_intensity = Intensity;
+		float k = b.KReflection;
+		float new_intensity = Intensity * k;
 
 		Ray new_ray;
-		new_ray.Init(intersection_point, new_direction, new_intensity);
+		new_ray.Init(intersection_point, new_direction, new_intensity, RefractionRate);
+		return new_ray;
+	}
+
+	/*
+	描述：和边界求交生成折射光线（空）
+	参数：边界，交点对应的网格id i，j，交点的t值
+	返回：新的光线
+	*/
+	Ray GetRefraction(Board& b, int i, int j, float t)
+	{
+		Point intersection_point = StartPlace + Direction * t;
+		intersection_point.y = b.Y;
+		Ray new_ray;
+		new_ray.Init(intersection_point, Direction, 0, 1);
 		return new_ray;
 	}
 
@@ -314,11 +330,40 @@ public:
 		Point tangent_speed = Direction - norm_speed;
 		Point new_direction = tangent_speed - norm_speed;
 
-		//TODO：强度
-		float new_intensity = Intensity;
+		float k = m.Faces[i].KReflection;
+		float new_intensity = Intensity * k;
 
 		Ray new_ray;
-		new_ray.Init(intersection_point, new_direction, new_intensity);
+		new_ray.Init(intersection_point, new_direction, new_intensity, RefractionRate);
+		return new_ray;
+	}
+
+	/*
+	描述：和三角面片模型求交生成折射光线
+	参数：三角面片模型，交点对应的面片id i，交点的t值
+	返回：新的光线
+	*/
+	Ray GetRefraction(MeshModel& m, int i, float t)
+	{
+		Point intersection_point = StartPlace + Direction * t;
+		
+		float dist = sqrt(Direction * m.Faces[i].Norm);
+		Point norm_speed = m.Faces[i].Norm * dist;
+		Point tangent_speed = Direction - norm_speed;
+		
+		float x = tangent_speed.Dist();
+		float y = norm_speed.Dist();
+		float n1 = RefractionRate;
+		float n2 = m.RefractionRate;
+		float k_x = n1 * y / sqrt(n2 * n2 * (x * x + y * y) - n1 * n1 * x * x);
+		Point new_speed = norm_speed + tangent_speed * k_x;
+		new_speed.Normalize();
+
+		float k = m.Faces[i].KRefraction;
+		float new_intensity = Intensity * k;
+
+		Ray new_ray;
+		new_ray.Init(intersection_point, new_speed, new_intensity, n2);
 		return new_ray;
 	}
 

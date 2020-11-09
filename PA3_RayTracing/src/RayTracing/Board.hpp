@@ -23,6 +23,8 @@ public:
 	GLfloat Shininess[1] = { 0 }; //镜面指数
 	float KReflection = 0.0;
 	float KRefraction = 0.0;
+	float RefractionRate = 0.0;
+
 	RectangleMesh() {}
 	void InitPlace(float start_x, float start_z, float size_x, float size_z, float y)
 	{
@@ -34,7 +36,7 @@ public:
 	}
 
 	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess,
-		float k_reflection, float k_refraction)
+		float k_reflection, float k_refraction, float refraction_rate)
 	{
 		for (int i = 0; i < 3; i++)
 		{
@@ -50,6 +52,7 @@ public:
 		Shininess[0] = shininess;
 		KReflection = k_reflection;
 		KRefraction = k_refraction;
+		RefractionRate = refraction_rate;
 	}
 };
 
@@ -73,6 +76,7 @@ public:
 	GLfloat Shininess[1] = { 0 }; //镜面指数
 	float KReflection = 0.0;
 	float KRefraction = 0.0;
+	float RefractionRate = 0.0;
 
 
 	Board(){}
@@ -96,7 +100,7 @@ public:
 	}
 
 	void InitColor(GLfloat color[], GLfloat ambient[], GLfloat diffuse[], GLfloat specular[], GLfloat shininess, 
-		float k_reflection, float k_refraction)
+		float k_reflection, float k_refraction, float refraction_rate)
 	{
 		for (int i = 0; i < 3; i++)
 		{
@@ -112,11 +116,12 @@ public:
 		Shininess[0] = shininess;
 		KReflection = k_reflection;
 		KRefraction = k_refraction;
+		RefractionRate = refraction_rate;
 		for (int i = 0; i < XNum; i++)
 		{
 			for (int j = 0; j < ZNum; j++)
 			{
-				RectangleList[i][j].InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
+				RectangleList[i][j].InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction, refraction_rate);
 			}
 		}
 	}

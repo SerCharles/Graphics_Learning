@@ -22,7 +22,7 @@ const int WindowSizeX = 800, WindowSizeY = 600, WindowPlaceX = 100, WindowPlaceY
 const char WindowName[] = "MyScene";
 const float XRange = 10, ZRange = 10, Height = 8, YFloor = 0; //场景的X,Y,Z范围（-X,X),(0,H),(-Z,Z)
 int CurrentMode = -1; //模式：模式1是OpenGL光照，模式2是光线追踪
-
+float GlobalRefractionRate = 1;
 
 //光照，相机
 Camera TheCamera;
@@ -98,9 +98,10 @@ void InitBoards()
 	GLfloat diffuse_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat specular_floor[3] = { 0.2, 0.2, 0.2 };
 	GLfloat shininess_floor = 40;
-	float k_reflection = 0.1;
+	float k_reflection = 0.2;
 	float k_refraction = 0;
-	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor, k_reflection, k_refraction);
+	float refraction_rate = 1;
+	Floor.InitColor(color_floor, ambient_floor, diffuse_floor, specular_floor, shininess_floor, k_reflection, k_refraction, refraction_rate);
 }
 
 //初始化面片
@@ -119,10 +120,11 @@ void InitMeshs()
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
 		float k_reflection = 0.2;
-		float k_refraction = 0.4;
+		float k_refraction = 0.1;
+		float refraction_rate = 1.4;
 
 		Bunny.InitPlace("bunny.ply", size, center);
-		Bunny.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
+		Bunny.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction, refraction_rate);
 	}
 
 	//龙
@@ -138,10 +140,11 @@ void InitMeshs()
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
 		float k_reflection = 0.3;
-		float k_refraction = 0.2;
+		float k_refraction = 0.1;
+		float refraction_rate = 1.6;
 
 		Dragon.InitPlace("dragon.ply", size, center);
-		Dragon.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
+		Dragon.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction, refraction_rate);
 	}
 
 	//佛
@@ -157,10 +160,11 @@ void InitMeshs()
 		GLfloat specular[3] = { 0.2, 0.2, 0.2 };
 		GLfloat shininess = 100;
 		float k_reflection = 0.6;
-		float k_refraction = 0.2;
+		float k_refraction = 0.9;
+		float refraction_rate = 1.8;
 
 		Happy.InitPlace("happy.ply", size, center);
-		Happy.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction);
+		Happy.InitColor(color, ambient, diffuse, specular, shininess, k_reflection, k_refraction, refraction_rate);
 	}
 }
 
@@ -344,7 +348,7 @@ const int GridX = 500;
 const int GridY = 500;
 const float LengthX = 20;
 const float LengthY = 20;
-const int MaxDepth = 3;
+const int MaxDepth = 6;
 Color Result[GridX][GridY];
 /*
 描述：光线追踪主函数
@@ -353,7 +357,9 @@ Color Result[GridX][GridY];
 */
 Color RayTracing(Ray& the_ray, int depth)
 {
-	if (depth > MaxDepth)
+	const float Threshold = 0.01;
+
+	if (depth > MaxDepth || the_ray.Intensity <= Threshold)
 	{
 		return Color(0.0, 0.0, 0.0);
 	}
@@ -424,6 +430,7 @@ Color RayTracing(Ray& the_ray, int depth)
 		k_refraction = the_rectangle.KRefraction;
 		color = PhongModel(TheGLLight, TheCamera, the_rectangle);
 		reflection = the_ray.GetReflection(Floor, i_floor, j_floor, t_floor);
+		refraction = the_ray.GetRefraction(Floor, i_floor, j_floor, t_floor);
 		intersection = reflection.StartPlace;
 	}
 	else if (min_id == 1)
@@ -433,6 +440,7 @@ Color RayTracing(Ray& the_ray, int depth)
 		k_refraction = the_triangle.KRefraction;
 		color = PhongModel(TheGLLight, TheCamera, the_triangle);
 		reflection = the_ray.GetReflection(Bunny, i_bunny, t_bunny);
+		refraction = the_ray.GetRefraction(Bunny, i_bunny, t_bunny);
 		intersection = reflection.StartPlace;
 	}
 	
@@ -443,6 +451,7 @@ Color RayTracing(Ray& the_ray, int depth)
 		k_refraction = the_triangle.KRefraction;
 		color = PhongModel(TheGLLight, TheCamera, the_triangle);
 		reflection = the_ray.GetReflection(Dragon, i_dragon, t_dragon);
+		refraction = the_ray.GetRefraction(Dragon, i_dragon, t_dragon);
 		intersection = reflection.StartPlace;
 	}
 	else if (min_id == 3)
@@ -452,11 +461,13 @@ Color RayTracing(Ray& the_ray, int depth)
 		k_refraction = the_triangle.KRefraction;
 		color = PhongModel(TheGLLight, TheCamera, the_triangle);
 		reflection = the_ray.GetReflection(Happy, i_happy, t_happy);
+		refraction = the_ray.GetRefraction(Happy, i_happy, t_happy);
 		intersection = reflection.StartPlace;
 	}
 
 	Color color_reflection = RayTracing(reflection, depth + 1);
-	Color result = color + color_reflection * k_reflection;
+	Color color_refraction = RayTracing(refraction, depth + 1);
+	Color result = color + color_reflection * k_reflection + color_refraction * k_refraction;
 	return result;
 }
 
@@ -500,7 +511,7 @@ void RayTracingMain()
 			Point dy = y_axis * (dist_y * j);
 			Point start = base + dx + dy;
 			Ray the_ray;
-			the_ray.Init(start, z_axis, 1);
+			the_ray.Init(start, z_axis, 1, GlobalRefractionRate);
 			Color the_color = RayTracing(the_ray, 1);
 			Result[i][j] = the_color;
 		}
