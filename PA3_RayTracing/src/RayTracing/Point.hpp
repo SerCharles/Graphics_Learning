@@ -225,3 +225,15 @@ int GetSmallestNum(vector<float> list)
 	return min_id;
 }
 
+/*
+描述：判断点是否在一个矩形内
+参数：点，下边界，上边界
+返回：是/否
+*/
+bool JudgePointInsideRectangle(Point the_point, Point down, Point up)
+{
+	if (the_point.x < down.x || the_point.x > up.x) return 0;
+	if (the_point.y < down.y || the_point.y > up.y) return 0;
+	if (the_point.z < down.z || the_point.z > up.z) return 0;
+	return 1;
+}

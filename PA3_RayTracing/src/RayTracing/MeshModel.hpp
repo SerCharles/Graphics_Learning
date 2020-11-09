@@ -89,6 +89,115 @@ public:
 	}
 };
 
+
+/*
+描述：判断一个mesh在不在包围盒内
+参数：mesh，包围盒下点,包围盒上点
+返回：是/否
+*/
+bool JudgeMeshInsideBox(TriangleMesh& mesh, Point down, Point up)
+{
+	if (JudgePointInsideRectangle(mesh.v1, down, up)) return 1;
+	if (JudgePointInsideRectangle(mesh.v2, down, up)) return 1;
+	if (JudgePointInsideRectangle(mesh.v3, down, up)) return 1;
+	return 0;
+}
+
+
+class BoundingBox
+{
+public:
+	const int Threshold = 5;
+	const int MaxDepth = 4;
+	int Depth;
+	BoundingBox* Sons[8] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+	Point PointDown;
+	Point PointUp;
+
+	vector<TriangleMesh> MeshList;
+	BoundingBox(Point point_down, Point point_up, int depth)
+	{
+		MeshList.clear();
+		PointDown = point_down;
+		PointUp = point_up;
+		Depth = depth;
+		for (int i = 0; i < 8; i++)
+		{
+			Sons[i] = NULL;
+		}
+
+	}
+
+	void GetMeshes(vector<TriangleMesh>& list)
+	{
+		for (int i = 0; i < list.size(); i++)
+		{
+			MeshList.push_back(list[i]);
+		}
+	}
+
+	void GetSons()
+	{
+		if (Depth >= MaxDepth || MeshList.size() <= Threshold)
+		{
+			return;
+		}
+		float down_x = PointDown.x;
+		float down_y = PointDown.y;
+		float down_z = PointDown.z;
+		float middle_x = (PointDown.x + PointUp.x) / 2;
+		float middle_y = (PointDown.y + PointUp.y) / 2;
+		float middle_z = (PointDown.z + PointUp.z) / 2;
+		float up_x = PointUp.x;
+		float up_y = PointUp.y;
+		float up_z = PointUp.z;
+		Point downs[8];
+		Point ups[8];
+		downs[0].SetPlace(down_x, down_y, down_z);
+		ups[0].SetPlace(middle_x, middle_y, middle_z);
+		downs[1].SetPlace(middle_x, down_y, down_z);
+		ups[1].SetPlace(up_x, middle_y, middle_z);
+		downs[2].SetPlace(down_x, middle_y, down_z);
+		ups[2].SetPlace(middle_x, up_y, middle_z);
+		downs[3].SetPlace(down_x, down_y, middle_z);
+		ups[3].SetPlace(middle_x, middle_y, up_z);
+		downs[4].SetPlace(middle_x, middle_y, down_z);
+		ups[4].SetPlace(up_x, up_y, middle_z);
+		downs[5].SetPlace(middle_x, down_y, middle_z);
+		ups[5].SetPlace(up_x, middle_y, up_z);
+		downs[6].SetPlace(down_x, middle_y, middle_z);
+		ups[6].SetPlace(middle_x, up_y, up_z);
+		downs[7].SetPlace(middle_x, middle_y, middle_z);
+		ups[7].SetPlace(up_x, up_y, up_z);
+		for (int i = 0; i < 8; i++)
+		{
+			Sons[i] = new BoundingBox(downs[i], ups[i], Depth + 1);
+			for (int j = 0; j < MeshList.size(); j++)
+			{
+				if (JudgeMeshInsideBox(MeshList[j], Sons[i]->PointDown, Sons[i]->PointUp))
+				{
+					Sons[i]->MeshList.push_back(MeshList[j]);
+				}
+			}
+		}
+	}
+
+	void BuildTree()
+	{
+		GetSons();
+		for (int i = 0; i < 8; i++)
+		{
+			if (Sons[i] != NULL)
+			{
+				Sons[i]->BuildTree();
+			}
+		}
+	}
+};
+
+
+
+
 class MeshModel
 {
 public:
@@ -103,6 +212,7 @@ public:
 	vector<Point> Vertexs;
 	vector<TriangleMesh> Faces;
 	vector<MeshPoints> FaceIDs;
+	BoundingBox* TheBoundingBox = NULL;
 	MeshModel() {}
 
 	//材质，纹理，颜色信息
@@ -237,6 +347,29 @@ public:
 	}
 
 	/*
+	描述：建立包围盒
+	*/
+	void BuildBoundingBox()
+	{
+		float min_x = 14530529, min_y = 14530529, min_z = 14530529;
+		float max_x = -14530529, max_y = -14530529, max_z = -14530529;
+		for (int i = 0; i < VertexNum; i++)
+		{
+			if (Vertexs[i].x < min_x) min_x = Vertexs[i].x;
+			if (Vertexs[i].x > max_x) max_x = Vertexs[i].x;
+			if (Vertexs[i].y < min_y) min_y = Vertexs[i].y;
+			if (Vertexs[i].y > max_y) max_y = Vertexs[i].y;
+			if (Vertexs[i].z < min_z) min_z = Vertexs[i].z;
+			if (Vertexs[i].z > max_z) max_z = Vertexs[i].z;
+		}
+		Point min_p = Point(min_x, min_y, min_z);
+		Point max_p = Point(max_x, max_y, max_z);
+		TheBoundingBox = new BoundingBox(min_p, max_p, 1);
+		TheBoundingBox->GetMeshes(Faces);
+		TheBoundingBox->BuildTree();
+	}
+
+	/*
 	描述：初始化面片，并且进行归一化
 	参数：文件名，设置的大小，设置的相对位置
 	返回：无
@@ -284,6 +417,12 @@ public:
 			Faces.push_back(nova);
 			FaceIDs.push_back(nova_num);
 		}
+
+		BuildBoundingBox();
 	}
 
+
+
 };
+
+

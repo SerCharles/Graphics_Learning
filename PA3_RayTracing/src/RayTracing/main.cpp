@@ -383,7 +383,7 @@ Color RayTracing(Ray& the_ray, int depth)
 	t_list.push_back(t_happy);
 	
 	int min_id = GetSmallestNum(t_list);
-	if (min_id < 0 || min_id >= 2)
+	if (min_id < 0 || min_id >= 4)
 	{
 		return Color(0.0, 0.0, 0.0);
 	}
