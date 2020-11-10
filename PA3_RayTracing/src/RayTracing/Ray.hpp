@@ -355,7 +355,7 @@ public:
 		float y = norm_speed.Dist();
 		float n1 = RefractionRate;
 		float n2 = m.RefractionRate;
-		float k_x = n1 * y / sqrt(n2 * n2 * (x * x + y * y) - n1 * n1 * x * x);
+		float k_x = n2 * y / sqrt(n1 * n1 * (x * x + y * y) - n2 * n2 * x * x);
 		Point new_speed = norm_speed + tangent_speed * k_x;
 		new_speed.Normalize();
 
